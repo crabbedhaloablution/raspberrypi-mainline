@@ -11,7 +11,7 @@ if [[ ${PV} == 9999* ]]; then
 else
 	GIT_COMMIT="dff5760"
 	SRC_URI="https://github.com/raspberrypi/userland/tarball/${GIT_COMMIT} -> ${P}.tar.gz"
-	KEYWORDS="arm"
+	KEYWORDS="~arm64 ~arm"
 	S="${WORKDIR}/raspberrypi-userland-${GIT_COMMIT}"
 fi
 
@@ -26,24 +26,27 @@ KEYWORDS=""
 IUSE=""
 
 DEPEND=""
-RDEPEND=""
+RDEPEND="acct-group/video
+	!media-libs/raspberrypi-userland-bin"
 
-#raspberrypi-userland.patch
-#
+#raspberrypi-userland.patch:
 #See https://github.com/raspberrypi/userland/pull/650
-PATCHES=( "${FILESDIR}/${PN}-libdir.patch" )
+PATCHES=( "${FILESDIR}/${PN}-libdir.patch"
+	"${FILESDIR}/${PN}-include.patch" )
 
 pkg_setup() {
 	append-ldflags $(no-as-needed)
-}
-
-src_configure() {
-	local mycmakeargs=(
+	mycmakeargs=(
 		-DVMCS_INSTALL_PREFIX="/usr"
 		-DARM64=$(usex arm64 ON OFF)
 	)
+}
 
-	cmake-utils_src_configure
+src_prepare() {
+	cmake-utils_src_prepare
+	sed -i \
+		-e 's:DESTINATION ${VMCS_INSTALL_PREFIX}/src:DESTINATION ${VMCS_INSTALL_PREFIX}/'"share/doc/${PF}:" \
+		"${S}/makefiles/cmake/vmcs.cmake" || die "Failed sedding makefiles/cmake/vmcs.cmake"
 }
 
 src_install() {
@@ -52,7 +55,4 @@ src_install() {
 	insinto /lib/udev/rules.d
 	doins "${FILESDIR}"/92-local-vchiq-permissions.rules
 
-	dodir /usr/share/doc/${PF}
-	mv "${D}"/usr/src/hello_pi "${D}"/usr/share/doc/${PF}/
-	rmdir "${D}"/usr/src
 }
