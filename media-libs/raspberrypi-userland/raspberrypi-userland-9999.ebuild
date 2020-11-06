@@ -2,7 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=5
-inherit cmake-utils flag-o-matic git-r3
+inherit cmake-utils flag-o-matic
 
 if [[ ${PV} == 9999* ]]; then
 	inherit git-r3
@@ -37,6 +37,7 @@ pkg_setup() {
 src_configure() {
 	local mycmakeargs=(
 		-DVMCS_INSTALL_PREFIX="/usr"
+		-DARM64=$(usex arm64 1 0)
 	)
 
 	cmake-utils_src_configure
