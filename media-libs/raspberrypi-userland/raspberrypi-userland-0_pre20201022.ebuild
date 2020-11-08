@@ -37,6 +37,8 @@ RDEPEND="acct-group/video
 PATCHES=( "${FILESDIR}/${PN}-libdir.patch" )
 #Don't install includes that collide.
 PATCHES+=( "${FILESDIR}/${PN}-include.patch" )
+#See https://github.com/raspberrypi/userland/pull/655
+PATCHES+=( "${FILESDIR}/${PN}-libfdt-static.patch" )
 
 pkg_setup() {
 	append-ldflags $(no-as-needed)
@@ -52,9 +54,6 @@ src_prepare() {
 	sed -i \
 		-e 's:DESTINATION ${VMCS_INSTALL_PREFIX}/src:DESTINATION ${VMCS_INSTALL_PREFIX}/'"share/doc/${PF}:" \
 		"${S}/makefiles/cmake/vmcs.cmake" || die "Failed sedding makefiles/cmake/vmcs.cmake"
-	sed -i \
-		-e 's:add_library(fdt:add_library(fdt STATIC:' \
-		"${S}/opensrc/helpers/libfdt/CMakeLists.txt" || die
 }
 
 src_install() {
