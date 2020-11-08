@@ -1,7 +1,7 @@
 # Copyright 1999-2017 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=5
+EAPI=7
 inherit cmake-utils flag-o-matic udev
 
 if [[ ${PV} == 9999* ]]; then
@@ -52,6 +52,9 @@ src_prepare() {
 	sed -i \
 		-e 's:DESTINATION ${VMCS_INSTALL_PREFIX}/src:DESTINATION ${VMCS_INSTALL_PREFIX}/'"share/doc/${PF}:" \
 		"${S}/makefiles/cmake/vmcs.cmake" || die "Failed sedding makefiles/cmake/vmcs.cmake"
+	sed -i \
+		-e 's:add_library(fdt:add_library(fdt STATIC:' \
+		"${S}/opensrc/helpers/libfdt/CMakeLists.txt" || die
 }
 
 src_install() {
