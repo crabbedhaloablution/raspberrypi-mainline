@@ -18,24 +18,24 @@ fi
 
 DESCRIPTION="Raspberry Pi userspace tools and libraries"
 HOMEPAGE="https://github.com/raspberrypi/userland"
-SRC_URI=""
 
 LICENSE="BSD"
 SLOT="0"
-KEYWORDS=""
 IUSE=""
 
 DEPEND=""
 RDEPEND="acct-group/video
 	!media-libs/raspberrypi-userland-bin"
 
-#raspberrypi-userland.patch:
+#Install in $(get_libdir)
 #See https://github.com/raspberrypi/userland/pull/650
-PATCHES=( "${FILESDIR}/${PN}-libdir.patch"
-	"${FILESDIR}/${PN}-include.patch" )
+PATCHES=( "${FILESDIR}/${PN}-libdir.patch" )
+#Don't install includes that collide.
+PATCHES+=( "${FILESDIR}/${PN}-include.patch" )
 
 pkg_setup() {
 	append-ldflags $(no-as-needed)
+
 	mycmakeargs=(
 		-DVMCS_INSTALL_PREFIX="/usr"
 		-DARM64=$(usex arm64 ON OFF)
