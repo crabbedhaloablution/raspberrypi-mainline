@@ -1,4 +1,4 @@
-# Copyright 1999-2017 Gentoo Foundation
+# Copyright 1999-2020 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=7
@@ -16,10 +16,9 @@ else
 	#"e432bc3" is the git commit to plug in below.
 	GIT_COMMIT="e432bc3"
 	SRC_URI="https://github.com/raspberrypi/userland/tarball/${GIT_COMMIT} -> ${P}.tar.gz"
-	KEYWORDS="~arm64 ~arm"
+	KEYWORDS="~arm ~arm64"
 	S="${WORKDIR}/raspberrypi-userland-${GIT_COMMIT}"
 fi
-
 
 DESCRIPTION="Raspberry Pi userspace tools and libraries"
 HOMEPAGE="https://github.com/raspberrypi/userland"
