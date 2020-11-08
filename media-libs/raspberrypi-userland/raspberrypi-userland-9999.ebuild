@@ -2,7 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=7
-inherit cmake-utils flag-o-matic udev
+inherit cmake flag-o-matic udev
 
 if [[ ${PV} == 9999* ]]; then
 	inherit git-r3
@@ -49,13 +49,13 @@ pkg_setup() {
 }
 
 src_prepare() {
-	cmake-utils_src_prepare
+	cmake_src_prepare
 	sed -i \
 		-e 's:DESTINATION ${VMCS_INSTALL_PREFIX}/src:DESTINATION ${VMCS_INSTALL_PREFIX}/'"share/doc/${PF}:" \
 		"${S}/makefiles/cmake/vmcs.cmake" || die "Failed sedding makefiles/cmake/vmcs.cmake"
 }
 
 src_install() {
-	cmake-utils_src_install
+	cmake_src_install
 	udev_dorules "${FILESDIR}/92-local-vchiq-permissions.rules"
 }
