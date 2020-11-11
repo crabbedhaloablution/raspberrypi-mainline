@@ -31,6 +31,9 @@ src_prepare() {
 	sed -i \
 		-e 's:/etc/default/rpi-eeprom-update:/etc/conf.d/rpi-eeprom-update:' \
 		"${MY_P}/rpi-eeprom-update" || die "Failed sed on rpi-eeprom-update"
+	sed -i \
+		-e 's:/usr/bin/rpi-eeprom-update:/usr/sbin/rpi-eeprom-update:' \
+		"debian/rpi-eeprom.rpi-eeprom-update.service" || die "Failed sed on rpi-eeprom.rpi-eeprom-update.service"
 }
 
 src_install() {
@@ -43,7 +46,7 @@ src_install() {
 	keepdir /var/lib/raspberrypi/bootloader/backup
 
 	for dir in critical stable beta; do
-		insinto /lib/firmware/
+		insinto /lib/firmware/raspberrypi/bootloader
 		doins -r firmware/${dir}
 	done
 
