@@ -7,6 +7,7 @@ inherit mount-boot savedconfig
 # In case this is a real snapshot, fill in commit below.
 # For normal, tagged releases, leave blank
 MY_COMMIT=
+RASPBIAN_TAR=firmware-nonfree_20190114-1+rpt9.debian.tar.xz
 
 if [[ ${PV} == 99999999* ]]; then
 	inherit git-r3
@@ -15,10 +16,11 @@ else
 	if [[ -n "${MY_COMMIT}" ]]; then
 		SRC_URI="https://git.kernel.org/cgit/linux/kernel/git/firmware/linux-firmware.git/snapshot/${MY_COMMIT}.tar.gz -> ${P}.tar.gz"
 	else
-		SRC_URI="https://mirrors.edge.kernel.org/pub/linux/kernel/firmware/${P}.tar.xz"
+		SRC_URI="https://mirrors.edge.kernel.org/pub/linux/kernel/firmware/${P}.tar.xz
+			https://archive.raspberrypi.org/debian/pool/main/f/firmware-nonfree/${RASPBIAN_TAR}"
 	fi
 
-	KEYWORDS="~alpha amd64 arm arm64 hppa ~ia64 ~mips ppc ppc64 s390 sparc x86"
+	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~mips ~ppc ~ppc64 ~s390 ~sparc ~x86"
 fi
 
 DESCRIPTION="Linux firmware files"
@@ -168,6 +170,7 @@ src_prepare() {
 		brcm/brcmfmac43430-sdio.raspberrypi,3-model-b.txt
 		brcm/brcmfmac43455-sdio.raspberrypi,3-model-b-plus.txt
 		brcm/brcmfmac4356-pcie.gpd-win-pocket.txt
+
 		# isci (GPL-2)
 		isci/isci_firmware.bin
 		# carl9170 (GPL-2+)
@@ -264,6 +267,12 @@ src_install() {
 	./copy-firmware.sh -v "${ED}/lib/firmware" || die
 
 	pushd "${ED}/lib/firmware" &>/dev/null || die
+
+	for file in "${WORKDIR}"/brcm/*; do
+		cp "${file}" brcm/ || die "Failed copying $file"
+	done
+
+	eapply -p1 "${WORKDIR}/debian/patches/sdio-txt-files.patch"
 
 	# especially use !redistributable will cause some broken symlinks
 	einfo "Removing broken symlinks ..."
