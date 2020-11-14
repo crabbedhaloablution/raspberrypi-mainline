@@ -82,5 +82,11 @@ src_install() {
 }
 
 pkg_postinst() {
-	:
+	elog 'To have rpi-eeprom-update be run at each startup, enable either of'
+	elog '/etc/init.d/rpi-eeprom-update (for openrc users)'
+	elog 'or'
+	elog 'rpi-eeprom-update.service (for systemd users)'
+	elog '/etc/conf.d/rpi-eeprom-update contains the configuration.'
+	elog 'FIRMWARE_RELEASE_STATUS="critical|stable|beta" determines'
+	elog 'which release track you get. "critical" is recommended and the default.'
 }
