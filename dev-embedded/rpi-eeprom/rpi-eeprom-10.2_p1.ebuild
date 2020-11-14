@@ -76,8 +76,6 @@ src_install() {
 
 	popd 1>/dev/null
 
-	keepdir /var/lib/raspberrypi/bootloader/backup
-
 	newinitd "${FILESDIR}/init.d_rpi-eeprom-update-1" "rpi-eeprom-update"
 }
 
