@@ -53,6 +53,10 @@ src_prepare() {
 	sed -i \
 		-e 's:DESTINATION ${VMCS_INSTALL_PREFIX}/src:DESTINATION ${VMCS_INSTALL_PREFIX}/'"share/doc/${PF}:" \
 		"${S}/makefiles/cmake/vmcs.cmake" || die "Failed sedding makefiles/cmake/vmcs.cmake"
+	sed -i \
+		-e 's:^install(TARGETS EGL GLESv2:install(TARGETS:' \
+		-e 's:^install(TARGETS EGL_static GLESv2_static:install(TARGETS:' \
+		"${S}/interface/khronos/CMakeLists.txt" || die "Failed sedding interface/khronos/CMakeLists.txt"
 }
 
 src_install() {
