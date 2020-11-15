@@ -5,7 +5,7 @@ EAPI=7
 
 inherit udev systemd
 
-DESCRIPTION="System tweaks for the Raspberry Pi"
+DESCRIPTION="System tweaks for the Raspberry Pi from Raspbian (RPi-Distro)"
 
 HOMEPAGE="https://github.com/RPi-Distro/raspberrypi-sys-mods"
 
@@ -70,3 +70,4 @@ src_install() {
 		systemd_enable_service multi-user.target regenerate_ssh_host_keys.service
 	fi
 }
+
