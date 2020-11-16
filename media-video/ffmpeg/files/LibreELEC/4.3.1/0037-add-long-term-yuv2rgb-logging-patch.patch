@@ -1,0 +1,27 @@
+From 11266c9a3d8e5fc30a919ccabc0127ae58daa931 Mon Sep 17 00:00:00 2001
+From: chewitt <github@chrishewitt.net>
+Date: Sun, 11 Aug 2019 07:08:19 +0000
+Subject: [PATCH 37/54] add long-term yuv2rgb logging patch
+
+---
+ libswscale/yuv2rgb.c | 4 ----
+ 1 file changed, 4 deletions(-)
+
+diff --git a/libswscale/yuv2rgb.c b/libswscale/yuv2rgb.c
+index 588462504e..20364ff318 100644
+--- a/libswscale/yuv2rgb.c
++++ b/libswscale/yuv2rgb.c
+@@ -688,10 +688,6 @@ SwsFunc ff_yuv2rgb_get_func_ptr(SwsContext *c)
+     if (t)
+         return t;
+ 
+-    av_log(c, AV_LOG_WARNING,
+-           "No accelerated colorspace conversion found from %s to %s.\n",
+-           av_get_pix_fmt_name(c->srcFormat), av_get_pix_fmt_name(c->dstFormat));
+-
+     switch (c->dstFormat) {
+     case AV_PIX_FMT_BGR48BE:
+     case AV_PIX_FMT_BGR48LE:
+-- 
+2.29.2
+

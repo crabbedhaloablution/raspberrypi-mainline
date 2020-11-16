@@ -1,0 +1,167 @@
+From 6df5cb52197a9025ec01273f3cc69fd144d87a4b Mon Sep 17 00:00:00 2001
+From: John Cox <jc@kynesim.co.uk>
+Date: Mon, 22 Jun 2020 12:19:13 +0100
+Subject: [PATCH 39/54] Fix some compile & run errors
+
+---
+ libavcodec/avcodec.h     | 27 ---------------------------
+ libavcodec/codec.h       | 11 +++++++++++
+ libavcodec/rpi_hevcdec.c | 25 ++++---------------------
+ libavcodec/rpivid_hevc.c |  2 +-
+ libavutil/buffer.h       |  3 ---
+ 5 files changed, 16 insertions(+), 52 deletions(-)
+
+diff --git a/libavcodec/avcodec.h b/libavcodec/avcodec.h
+index c953629838..d6e019bbe1 100644
+--- a/libavcodec/avcodec.h
++++ b/libavcodec/avcodec.h
+@@ -2929,33 +2929,6 @@ void avsubtitle_free(AVSubtitle *sub);
+  * @{
+  */
+ 
+-/**
+- * Find a registered decoder with a matching codec ID.
+- *
+- * @param id AVCodecID of the requested decoder
+- * @return A decoder if one was found, NULL otherwise.
+- */
+-AVCodec *avcodec_find_decoder(enum AVCodecID id);
+-
+-/**
+- * Find a registered decoder with a matching codec ID and pix_fmt.
+- * A decoder will pix_fmt set to NULL will match any fmt.
+- * A fmt of AV_PIX_FMT_NONE will only match a decoder will px_fmt NULL.
+- *
+- * @param id AVCodecID of the requested decoder
+- * @param fmt AVPixelForma that msut be supported by decoder
+- * @return A decoder if one was found, NULL otherwise.
+- */
+-AVCodec *avcodec_find_decoder_by_id_and_fmt(enum AVCodecID id, enum AVPixelFormat fmt);
+-
+-/**
+- * Find a registered decoder with the specified name.
+- *
+- * @param name name of the requested decoder
+- * @return A decoder if one was found, NULL otherwise.
+- */
+-AVCodec *avcodec_find_decoder_by_name(const char *name);
+-
+ /**
+  * The default callback for AVCodecContext.get_buffer2(). It is made public so
+  * it can be called by custom get_buffer2() implementations for decoders without
+diff --git a/libavcodec/codec.h b/libavcodec/codec.h
+index 1fda619ee7..b4650f9ec9 100644
+--- a/libavcodec/codec.h
++++ b/libavcodec/codec.h
+@@ -349,6 +349,17 @@ const AVCodec *av_codec_iterate(void **opaque);
+  */
+ AVCodec *avcodec_find_decoder(enum AVCodecID id);
+ 
++/**
++ * Find a registered decoder with a matching codec ID and pix_fmt.
++ * A decoder will pix_fmt set to NULL will match any fmt.
++ * A fmt of AV_PIX_FMT_NONE will only match a decoder will px_fmt NULL.
++ *
++ * @param id AVCodecID of the requested decoder
++ * @param fmt AVPixelForma that msut be supported by decoder
++ * @return A decoder if one was found, NULL otherwise.
++ */
++AVCodec *avcodec_find_decoder_by_id_and_fmt(enum AVCodecID id, enum AVPixelFormat fmt);
++
+ /**
+  * Find a registered decoder with the specified name.
+  *
+diff --git a/libavcodec/rpi_hevcdec.c b/libavcodec/rpi_hevcdec.c
+index 6d92c1dceb..2228e2f677 100644
+--- a/libavcodec/rpi_hevcdec.c
++++ b/libavcodec/rpi_hevcdec.c
+@@ -44,7 +44,7 @@
+ #include "rpi_hevcdec.h"
+ #include "rpi_hevc_cabac_fns.h"
+ #include "profiles.h"
+-#include "hwaccel.h"
++#include "hwconfig.h"
+ 
+ #include "rpi_zc_frames.h"
+ #include "rpi_qpu.h"
+@@ -5924,8 +5924,6 @@ static av_cold int hevc_decode_init(AVCodecContext *avctx)
+     if (!qpu_ok())
+         return -1;
+ 
+-    avctx->internal->allocate_progress = 1;
+-
+     if ((ret = hevc_init_context(avctx)) < 0)
+         return ret;
+ 
+@@ -5974,22 +5972,6 @@ static av_cold int hevc_decode_init(AVCodecContext *avctx)
+     return 0;
+ }
+ 
+-#if HAVE_THREADS
+-static av_cold int hevc_init_thread_copy(AVCodecContext *avctx)
+-{
+-    HEVCRpiContext *s = avctx->priv_data;
+-    int ret;
+-
+-    memset(s, 0, sizeof(*s));
+-
+-    ret = hevc_init_context(avctx);
+-    if (ret < 0)
+-        return ret;
+-
+-    return 0;
+-}
+-#endif
+-
+ static void hevc_decode_flush(AVCodecContext *avctx)
+ {
+     HEVCRpiContext *s = avctx->priv_data;
+@@ -6125,7 +6107,6 @@ AVCodec ff_hevc_rpi_decoder = {
+     .decode                = hevc_rpi_decode_frame,
+     .flush                 = hevc_decode_flush,
+     .update_thread_context = ONLY_IF_THREADS_ENABLED(hevc_update_thread_context),
+-    .init_thread_copy      = ONLY_IF_THREADS_ENABLED(hevc_init_thread_copy),
+     .capabilities          = AV_CODEC_CAP_DR1 | AV_CODEC_CAP_DELAY |
+                              AV_CODEC_CAP_HARDWARE |
+                              AV_CODEC_CAP_AVOID_PROBING |
+@@ -6137,7 +6118,9 @@ AVCodec ff_hevc_rpi_decoder = {
+     // We only have decent optimisation for frame - so only admit to that
+                              AV_CODEC_CAP_FRAME_THREADS,
+ #endif
+-    .caps_internal         = FF_CODEC_CAP_INIT_THREADSAFE | FF_CODEC_CAP_EXPORTS_CROPPING,
++    .caps_internal         = FF_CODEC_CAP_INIT_THREADSAFE |
++                             FF_CODEC_CAP_EXPORTS_CROPPING |
++                             FF_CODEC_CAP_ALLOCATE_PROGRESS,
+     .pix_fmts              = hevc_rpi_pix_fmts,
+     .profiles              = NULL_IF_CONFIG_SMALL(ff_hevc_profiles),
+     .hw_configs            = hevc_rpi_hw_configs,
+diff --git a/libavcodec/rpivid_hevc.c b/libavcodec/rpivid_hevc.c
+index 1e33468dbc..95550b106b 100644
+--- a/libavcodec/rpivid_hevc.c
++++ b/libavcodec/rpivid_hevc.c
+@@ -12,7 +12,7 @@
+ #include "libavutil/avassert.h"
+ #include "libavutil/imgutils.h"
+ #include "avcodec.h"
+-#include "hwaccel.h"
++#include "hwconfig.h"
+ #include "decode.h"
+ 
+ #include "hevc.h"
+diff --git a/libavutil/buffer.h b/libavutil/buffer.h
+index 755c4e6cb7..998beec9ac 100644
+--- a/libavutil/buffer.h
++++ b/libavutil/buffer.h
+@@ -290,9 +290,6 @@ void av_buffer_pool_uninit(AVBufferPool **pool);
+  */
+ AVBufferRef *av_buffer_pool_get(AVBufferPool *pool);
+ 
+-// Return the opaque for the underlying frame
+-void *av_buffer_pool_buffer_get_opaque(AVBufferRef *ref);
+-
+ /**
+  * Query the original opaque parameter of an allocated buffer in the pool.
+  *
+-- 
+2.29.2
+

@@ -1,0 +1,25 @@
+From 2f3bcd03e9b7fa1bec432c1f99e5303866f5298b Mon Sep 17 00:00:00 2001
+From: Rechi <Rechi@users.noreply.github.com>
+Date: Tue, 21 Nov 2017 08:16:53 +0100
+Subject: [PATCH 02/54] use Kodi as extra version
+
+---
+ Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Makefile b/Makefile
+index 45a22b0cb3..76454245bb 100644
+--- a/Makefile
++++ b/Makefile
+@@ -120,7 +120,7 @@ GIT_LOG     = $(SRC_PATH)/.git/logs/HEAD
+ .version: M=@
+ 
+ libavutil/ffversion.h .version:
+-	$(M)$(VERSION_SH) $(SRC_PATH) libavutil/ffversion.h $(EXTRA_VERSION)
++	$(M)$(VERSION_SH) $(SRC_PATH) libavutil/ffversion.h Kodi
+ 	$(Q)touch .version
+ 
+ # force version.sh to run whenever version might have changed
+-- 
+2.29.2
+

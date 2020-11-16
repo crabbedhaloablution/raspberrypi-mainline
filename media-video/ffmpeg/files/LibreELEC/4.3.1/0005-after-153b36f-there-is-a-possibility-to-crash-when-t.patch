@@ -1,0 +1,41 @@
+From ae20c316d1712c26e137a4809e91733009dfe603 Mon Sep 17 00:00:00 2001
+From: Anton Fedchin <afedchin at ruswizards.com>
+Date: Fri, 11 Jan 2019 10:47:43 +0100
+Subject: [PATCH 05/54] after 153b36f there is a possibility to crash when
+ trying to get index of a surface which points to nirvana.
+
+it may occurs when a stream starts with non i-frame.
+---
+ libavcodec/dxva2.c | 10 ++++++----
+ 1 file changed, 6 insertions(+), 4 deletions(-)
+
+diff --git a/libavcodec/dxva2.c b/libavcodec/dxva2.c
+index 32416112bf..dfae500444 100644
+--- a/libavcodec/dxva2.c
++++ b/libavcodec/dxva2.c
+@@ -771,16 +771,18 @@ unsigned ff_dxva2_get_surface_index(const AVCodecContext *avctx,
+ #if CONFIG_D3D11VA
+     if (avctx->pix_fmt == AV_PIX_FMT_D3D11)
+         return (intptr_t)frame->data[1];
+-    if (avctx->pix_fmt == AV_PIX_FMT_D3D11VA_VLD) {
++    if (avctx->pix_fmt == AV_PIX_FMT_D3D11VA_VLD && surface) {
+         D3D11_VIDEO_DECODER_OUTPUT_VIEW_DESC viewDesc;
+         ID3D11VideoDecoderOutputView_GetDesc((ID3D11VideoDecoderOutputView*) surface, &viewDesc);
+         return viewDesc.Texture2D.ArraySlice;
+     }
+ #endif
+ #if CONFIG_DXVA2
+-    for (i = 0; i < DXVA_CONTEXT_COUNT(avctx, ctx); i++) {
+-        if (avctx->pix_fmt == AV_PIX_FMT_DXVA2_VLD && ctx->dxva2.surface[i] == surface)
+-            return i;
++    if (avctx->pix_fmt == AV_PIX_FMT_DXVA2_VLD) {
++        for (i = 0; i < DXVA_CONTEXT_COUNT(avctx, ctx); i++) {
++            if (ctx->dxva2.surface[i] == surface)
++                return i;
++        }
+     }
+ #endif
+ 
+-- 
+2.29.2
+

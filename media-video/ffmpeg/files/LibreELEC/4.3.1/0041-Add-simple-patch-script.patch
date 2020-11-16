@@ -1,0 +1,55 @@
+From ddf74b4e90d6d5c3210882211f19764a8a51e5e3 Mon Sep 17 00:00:00 2001
+From: John Cox <jc@kynesim.co.uk>
+Date: Fri, 19 Jun 2020 16:34:40 +0100
+Subject: [PATCH 41/54] Add simple patch script
+
+(cherry picked from commit d789e7e5f6d26c0d0d3be687ed968a1d929a60ca)
+---
+ pi-util/genpatch.sh | 35 +++++++++++++++++++++++++++++++++++
+ 1 file changed, 35 insertions(+)
+ create mode 100644 pi-util/genpatch.sh
+
+diff --git a/pi-util/genpatch.sh b/pi-util/genpatch.sh
+new file mode 100644
+index 0000000000..0948a68a7a
+--- /dev/null
++++ b/pi-util/genpatch.sh
+@@ -0,0 +1,35 @@
++set -e
++
++NOPATCH=
++if [ "$1" == "--notag" ]; then
++  shift
++  NOPATCH=1
++fi
++
++if [ "$1" == "" ]; then
++  echo Usage: $0 [--notag] \<patch_tag\>
++  echo e.g.: $0 mmal_4
++  exit 1
++fi
++
++VERSION=`cat RELEASE`
++if [ "$VERSION" == "" ]; then
++  echo Can\'t find version RELEASE
++  exit 1
++fi
++
++PATCHFILE=../ffmpeg-$VERSION-$1.patch
++
++if [ $NOPATCH ]; then
++  echo Not tagged
++else
++  # Only continue if we are all comitted
++  git diff --name-status --exit-code
++
++  PATCHTAG=pi/$VERSION/$1
++  echo Tagging: $PATCHTAG
++
++  git tag $PATCHTAG
++fi
++echo Generating patch: $PATCHFILE
++git diff n$VERSION -- > $PATCHFILE
+-- 
+2.29.2
+

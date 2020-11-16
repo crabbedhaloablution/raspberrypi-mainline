@@ -1,0 +1,72 @@
+From 3caa3841ffaedf38b38b7533aa275253212637c5 Mon Sep 17 00:00:00 2001
+From: marc <mhocking@ubuntu-desktop.(none)>
+Date: Mon, 18 Feb 2013 17:18:18 +0000
+Subject: [PATCH 01/54] dxva-h264: Fix an AMD driver issue with playback of
+ streams that don't start with an I-Frame
+
+---
+ libavcodec/dxva2_h264.c | 8 ++++++++
+ libavcodec/h264_slice.c | 1 +
+ libavcodec/h264dec.c    | 1 +
+ libavcodec/h264dec.h    | 2 ++
+ 4 files changed, 12 insertions(+)
+
+diff --git a/libavcodec/dxva2_h264.c b/libavcodec/dxva2_h264.c
+index 5b23b28f12..c0a8d80f3b 100644
+--- a/libavcodec/dxva2_h264.c
++++ b/libavcodec/dxva2_h264.c
+@@ -504,6 +504,14 @@ static int dxva2_h264_end_frame(AVCodecContext *avctx)
+ 
+     if (ctx_pic->slice_count <= 0 || ctx_pic->bitstream_size <= 0)
+         return -1;
++
++    // Wait for an I-frame before start decoding. Workaround for ATI UVD and UVD+ GPUs
++    if (!h->got_first_iframe) {
++        if (!(ctx_pic->pp.wBitFields & (1 << 15)))
++            return -1;
++        h->got_first_iframe = 1;
++    }
++
+     ret = ff_dxva2_common_end_frame(avctx, h->cur_pic_ptr->f,
+                                     &ctx_pic->pp, sizeof(ctx_pic->pp),
+                                     &ctx_pic->qm, sizeof(ctx_pic->qm),
+diff --git a/libavcodec/h264_slice.c b/libavcodec/h264_slice.c
+index 713953778a..db8363e4cc 100644
+--- a/libavcodec/h264_slice.c
++++ b/libavcodec/h264_slice.c
+@@ -928,6 +928,7 @@ static int h264_slice_header_init(H264Context *h)
+ 
+     h->first_field           = 0;
+     h->prev_interlaced_frame = 1;
++    h->got_first_iframe = 0;
+ 
+     init_scan_tables(h);
+     ret = ff_h264_alloc_tables(h);
+diff --git a/libavcodec/h264dec.c b/libavcodec/h264dec.c
+index 6270ea80df..5eedeb3c27 100644
+--- a/libavcodec/h264dec.c
++++ b/libavcodec/h264dec.c
+@@ -467,6 +467,7 @@ void ff_h264_flush_change(H264Context *h)
+ 
+     h->next_outputed_poc = INT_MIN;
+     h->prev_interlaced_frame = 1;
++    h->got_first_iframe = 0;
+     idr(h);
+ 
+     h->poc.prev_frame_num = -1;
+diff --git a/libavcodec/h264dec.h b/libavcodec/h264dec.h
+index 29c4d4e42c..a419615124 100644
+--- a/libavcodec/h264dec.h
++++ b/libavcodec/h264dec.h
+@@ -539,6 +539,8 @@ typedef struct H264Context {
+      * slices) anymore */
+     int setup_finished;
+ 
++    int got_first_iframe;
++
+     int cur_chroma_format_idc;
+     int cur_bit_depth_luma;
+     int16_t slice_row[MAX_SLICES]; ///< to detect when MAX_SLICES is too low
+-- 
+2.29.2
+

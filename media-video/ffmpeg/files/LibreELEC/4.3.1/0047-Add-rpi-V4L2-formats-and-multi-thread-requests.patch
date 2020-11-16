@@ -1,0 +1,815 @@
+From 48b5f8bf4af434315fcaefd61d813d9e3bfdd300 Mon Sep 17 00:00:00 2001
+From: John Cox <jc@kynesim.co.uk>
+Date: Thu, 2 Jul 2020 18:07:42 +0100
+Subject: [PATCH 47/54] Add rpi V4L2 formats and multi-thread requests
+
+---
+ configure                      |   2 +
+ libavcodec/Makefile            |   2 +-
+ libavcodec/hevc-ctrls.h        |   1 +
+ libavcodec/hevcdec.c           |  11 ++-
+ libavcodec/v4l2_phase.c        | 140 +++++++++++++++++++++++++++++++++
+ libavcodec/v4l2_phase.h        |  37 +++++++++
+ libavcodec/v4l2_request.c      |  86 +++++++++++++++++---
+ libavcodec/v4l2_request.h      |  19 +++++
+ libavcodec/v4l2_request_hevc.c |  46 ++++++++++-
+ libavutil/hwcontext_drm.c      | 107 +++++++++++++++++++++++--
+ libavutil/rpi_sand_fns.c       |   4 +-
+ pi-util/conf_native.sh         |   2 +
+ 12 files changed, 430 insertions(+), 27 deletions(-)
+ create mode 100644 libavcodec/v4l2_phase.c
+ create mode 100644 libavcodec/v4l2_phase.h
+
+diff --git a/configure b/configure
+index 27ee68cb21..3412549fe8 100755
+--- a/configure
++++ b/configure
+@@ -338,6 +338,7 @@ External library support:
+   --enable-libnpp          enable Nvidia Performance Primitives-based code [no]
+   --enable-mmal            enable Broadcom Multi-Media Abstraction Layer (Raspberry Pi) via MMAL [no]
+   --enable-rpi             enable other rpi specific stuff [no]
++  --enable-sand            enable sand video formats [rpi]
+   --enable-vout-drm        enable the vout_drm module - for internal testing only [no]
+   --disable-nvdec          disable Nvidia video decoding acceleration (via hwaccel) [autodetect]
+   --disable-nvenc          disable Nvidia video encoding code [autodetect]
+@@ -1888,6 +1889,7 @@ FEATURE_LIST="
+     rpi
+     runtime_cpudetect
+     safe_bitstream_reader
++    sand
+     shared
+     small
+     static
+diff --git a/libavcodec/Makefile b/libavcodec/Makefile
+index c561879011..c9d056101d 100644
+--- a/libavcodec/Makefile
++++ b/libavcodec/Makefile
+@@ -155,7 +155,7 @@ OBJS-$(CONFIG_VP3DSP)                  += vp3dsp.o
+ OBJS-$(CONFIG_VP56DSP)                 += vp56dsp.o
+ OBJS-$(CONFIG_VP8DSP)                  += vp8dsp.o
+ OBJS-$(CONFIG_V4L2_M2M)                += v4l2_m2m.o v4l2_context.o v4l2_buffers.o v4l2_fmt.o
+-OBJS-$(CONFIG_V4L2_REQUEST)            += v4l2_request.o
++OBJS-$(CONFIG_V4L2_REQUEST)            += v4l2_request.o v4l2_phase.o
+ OBJS-$(CONFIG_WMA_FREQS)               += wma_freqs.o
+ OBJS-$(CONFIG_WMV2DSP)                 += wmv2dsp.o
+ 
+diff --git a/libavcodec/hevc-ctrls.h b/libavcodec/hevc-ctrls.h
+index d1b094c8aa..13698d3f33 100644
+--- a/libavcodec/hevc-ctrls.h
++++ b/libavcodec/hevc-ctrls.h
+@@ -162,6 +162,7 @@ struct v4l2_hevc_pred_weight_table {
+ #define V4L2_HEVC_SLICE_PARAMS_FLAG_USE_INTEGER_MV		(1ULL << 6)
+ #define V4L2_HEVC_SLICE_PARAMS_FLAG_SLICE_DEBLOCKING_FILTER_DISABLED (1ULL << 7)
+ #define V4L2_HEVC_SLICE_PARAMS_FLAG_SLICE_LOOP_FILTER_ACROSS_SLICES_ENABLED (1ULL << 8)
++#define V4L2_HEVC_SLICE_PARAMS_FLAG_DEPENDENT_SLICE_SEGMENT		(1ULL << 9)
+ 
+ struct v4l2_ctrl_hevc_slice_params {
+ 	__u32	bit_size;
+diff --git a/libavcodec/hevcdec.c b/libavcodec/hevcdec.c
+index bfa7d0bf15..9eac634587 100644
+--- a/libavcodec/hevcdec.c
++++ b/libavcodec/hevcdec.c
+@@ -3111,10 +3111,6 @@ static int decode_nal_units(HEVCContext *s, const uint8_t *buf, int length)
+     }
+ 
+ fail:
+-    if (ret < 0 && s->avctx->hwaccel && s->avctx->hwaccel->abort_frame) {
+-        s->avctx->hwaccel->abort_frame(s->avctx);
+-    }
+-
+     if (s->ref && s->threads_type == FF_THREAD_FRAME)
+         ff_thread_report_progress(&s->ref->tf, INT_MAX, 0);
+ 
+@@ -3244,7 +3240,14 @@ static int hevc_decode_frame(AVCodecContext *avctx, void *data, int *got_output,
+     s->ref = NULL;
+     ret    = decode_nal_units(s, avpkt->data, avpkt->size);
+     if (ret < 0)
++    {
++        // Ensure that hwaccel knows this frame is over
++        if (s->avctx->hwaccel && s->avctx->hwaccel->abort_frame) {
++            s->avctx->hwaccel->abort_frame(s->avctx);
++        }
++
+         return ret;
++    }
+ 
+     if (avctx->hwaccel) {
+         if (s->ref && (ret = avctx->hwaccel->end_frame(avctx)) < 0) {
+diff --git a/libavcodec/v4l2_phase.c b/libavcodec/v4l2_phase.c
+new file mode 100644
+index 0000000000..0a7f6abd33
+--- /dev/null
++++ b/libavcodec/v4l2_phase.c
+@@ -0,0 +1,140 @@
++// v4l2_phase.c
++
++#include <stdio.h>
++#include <semaphore.h>
++#include <pthread.h>
++
++#include "libavutil/log.h"
++#include "v4l2_phase.h"
++
++typedef struct phase_envss {
++    unsigned int last_order;
++    pthread_mutex_t lock;
++    pthread_cond_t cond;
++} phase_env;
++
++struct V4L2PhaseControl {
++    unsigned int order;
++    unsigned int phase_count;
++    phase_env p[V4L2PHASE_PHASE_COUNT];
++};
++
++
++unsigned int ff_v4l2_phase_order_next(V4L2PhaseControl * const pc)
++{
++    return ++pc->order;
++}
++
++// Phase isn't required but it acts as a check that we know what we are doing
++int
++ff_v4l2_phase_claim(V4L2PhaseInfo * const pi, unsigned int phase)
++{
++    V4L2PhaseControl *const pc = pi->ctrl;
++    phase_env * const p = pc->p + phase;
++
++    if (pi->n2 != phase * 2) {
++        av_log(NULL, AV_LOG_ERROR, "%s: Unexpected phase: req=%d, cur=%d/%d\n", __func__, phase, pi->n2 >> 1, pi->n2 & 1);
++        return -1;
++    }
++
++    pthread_mutex_lock(&p->lock);
++
++    while (pi->order != p->last_order + 1) {
++        pthread_cond_wait(&p->cond, &p->lock);
++    }
++
++    pi->n2++;
++    pthread_mutex_unlock(&p->lock);
++    return 0;
++}
++
++int
++ff_v4l2_phase_release(V4L2PhaseInfo * const pi, unsigned int phase)
++{
++    V4L2PhaseControl *const pc = pi->ctrl;
++    phase_env * const p = pc->p + phase;
++
++    if (pi->n2 != ((phase << 1) | 1)) {
++        av_log(NULL, AV_LOG_ERROR, "%s: Unexpected phase: req=%d, cur=%d/%d\n", __func__, phase, pi->n2 >> 1, pi->n2 & 1);
++        return -1;
++    }
++
++    if (pi->order != p->last_order + 1) {
++        av_log(NULL, AV_LOG_ERROR, "%s: order_mismatch\n", __func__);
++        return -1;
++    }
++
++    pthread_mutex_lock(&p->lock);
++    p->last_order = pi->order;
++    pi->n2++;
++    pthread_cond_broadcast(&p->cond);
++    pthread_mutex_unlock(&p->lock);
++    return 0;
++}
++
++// Init the PhaseInfo, assign a new order, claim phase 0
++int
++ff_v4l2_phase_start(V4L2PhaseInfo * const pi, V4L2PhaseControl * const pc)
++{
++    pi->n2 = 0;
++    pi->ctrl = pc;
++    pi->order = ff_v4l2_phase_order_next(pc);
++    return ff_v4l2_phase_claim(pi, 0);
++}
++
++// Release any claimed phase and claim+release all remaining phases
++void ff_v4l2_phase_abort(V4L2PhaseInfo * const pi)
++{
++    V4L2PhaseControl *const pc = pi->ctrl;
++
++    // Nothing to do
++    if (pi->n2 == 0 || pi->n2 >= pc->phase_count * 2)
++        return;
++
++    // Run through all remaining phases
++    do {
++        if ((pi->n2 & 1) == 0)
++            ff_v4l2_phase_claim(pi, pi->n2 >> 1);
++        else
++            ff_v4l2_phase_release(pi, pi->n2 >> 1);
++    } while (pi->n2 < pc->phase_count * 2);
++}
++
++
++V4L2PhaseControl *
++ff_v4l2_phase_control_new(unsigned int phase_count)
++{
++    V4L2PhaseControl * pc;
++    unsigned int i;
++    if (phase_count > V4L2PHASE_PHASE_COUNT)
++        return NULL;
++    if ((pc = av_mallocz(sizeof(*pc))) == NULL)
++        return NULL;
++    pc->phase_count = phase_count;
++    for (i = 0; i != phase_count; ++i) {
++        phase_env * const p = pc->p + i;
++        p->last_order = 0;
++        pthread_mutex_init(&p->lock, NULL);
++        pthread_cond_init(&p->cond, NULL);
++    }
++    return pc;
++}
++
++void
++ff_v4l2_phase_control_deletez(V4L2PhaseControl ** const ppc)
++{
++    V4L2PhaseControl * const pc = *ppc;
++    unsigned int i;
++
++    if (pc == NULL)
++        return;
++    *ppc = NULL;
++
++    for (i = 0; i != pc->phase_count; ++i) {
++        phase_env * const p = pc->p + i;
++        pthread_mutex_destroy(&p->lock);
++        pthread_cond_destroy(&p->cond);
++    }
++}
++
++
+diff --git a/libavcodec/v4l2_phase.h b/libavcodec/v4l2_phase.h
+new file mode 100644
+index 0000000000..392f22b988
+--- /dev/null
++++ b/libavcodec/v4l2_phase.h
+@@ -0,0 +1,37 @@
++// v4l2_phase.h
++#ifndef AVCODEC_V4L2_PHASE_H
++#define AVCODEC_V4L2_PHASE_H
++
++#define V4L2PHASE_PHASE_COUNT 2
++
++struct V4L2PhaseControl;
++typedef struct V4L2PhaseControl V4L2PhaseControl;
++
++typedef struct V4L2PhaseInfo {
++    unsigned int n2;  // (phase << 1) | (claimed)
++    unsigned int order;
++    V4L2PhaseControl * ctrl;
++} V4L2PhaseInfo;
++
++unsigned int ff_v4l2_phase_order_next(V4L2PhaseControl * const pc);
++
++static inline int ff_v4l2_phase_started(const V4L2PhaseInfo * const pi)
++{
++    return pi->n2 != 0;
++}
++
++// Init the PhaseInfo, assign a new order, claim phase 0
++int ff_v4l2_phase_start(V4L2PhaseInfo * const pi, V4L2PhaseControl * const pc);
++
++// Phase isn't required but it acts as a check that we know what we are doing
++int ff_v4l2_phase_claim(V4L2PhaseInfo * const pi, unsigned int phase);
++int ff_v4l2_phase_release(V4L2PhaseInfo * const pi, unsigned int phase);
++
++// Release any claimed phase and claim+release all remaining phases
++void ff_v4l2_phase_abort(V4L2PhaseInfo * const pi);
++
++
++V4L2PhaseControl * ff_v4l2_phase_control_new(unsigned int phase_count);
++void ff_v4l2_phase_control_deletez(V4L2PhaseControl ** const ppc);
++
++#endif
+diff --git a/libavcodec/v4l2_request.c b/libavcodec/v4l2_request.c
+index 7d97468153..60f51e5ec4 100644
+--- a/libavcodec/v4l2_request.c
++++ b/libavcodec/v4l2_request.c
+@@ -29,6 +29,7 @@
+ #include "decode.h"
+ #include "internal.h"
+ #include "v4l2_request.h"
++#include "v4l2_phase.h"
+ 
+ uint64_t ff_v4l2_request_get_capture_timestamp(AVFrame *frame)
+ {
+@@ -36,6 +37,20 @@ uint64_t ff_v4l2_request_get_capture_timestamp(AVFrame *frame)
+     return req ? v4l2_timeval_to_ns(&req->capture.buffer.timestamp) : 0;
+ }
+ 
++int ff_v4l2_request_start_phase_control(AVFrame *frame, struct V4L2PhaseControl * ctrl)
++{
++    V4L2RequestDescriptor * const req = (V4L2RequestDescriptor*)frame->data[0];
++    return ff_v4l2_phase_start(&req->phase, ctrl);
++}
++
++void ff_v4l2_request_abort_phase_control(AVFrame *frame)
++{
++    if (frame != NULL && frame->data[0] != NULL) {
++        V4L2RequestDescriptor *const req = (V4L2RequestDescriptor *)frame->data[0];
++        ff_v4l2_phase_abort(&req->phase);
++    }
++}
++
+ int ff_v4l2_request_reset_frame(AVCodecContext *avctx, AVFrame *frame)
+ {
+     V4L2RequestDescriptor *req = (V4L2RequestDescriptor*)frame->data[0];
+@@ -184,6 +199,10 @@ static int v4l2_request_dequeue_buffer(V4L2RequestContext *ctx, V4L2RequestBuffe
+ }
+ 
+ const uint32_t v4l2_request_capture_pixelformats[] = {
++#if CONFIG_SAND
++    V4L2_PIX_FMT_NV12_COL128,
++    V4L2_PIX_FMT_NV12_10_COL128,
++#endif
+     V4L2_PIX_FMT_NV12,
+ #ifdef DRM_FORMAT_MOD_ALLWINNER_TILED
+     V4L2_PIX_FMT_SUNXI_TILED_NV12,
+@@ -201,6 +220,16 @@ static int v4l2_request_set_drm_descriptor(V4L2RequestDescriptor *req, struct v4
+         layer->format = DRM_FORMAT_NV12;
+         desc->objects[0].format_modifier = DRM_FORMAT_MOD_LINEAR;
+         break;
++#if CONFIG_SAND
++    case V4L2_PIX_FMT_NV12_COL128:
++        layer->format = DRM_FORMAT_NV12;
++        desc->objects[0].format_modifier = DRM_FORMAT_MOD_BROADCOM_SAND128_COL_HEIGHT(format->fmt.pix.bytesperline);
++        break;
++    case V4L2_PIX_FMT_NV12_10_COL128:
++        layer->format = DRM_FORMAT_P030;
++        desc->objects[0].format_modifier = DRM_FORMAT_MOD_BROADCOM_SAND128_COL_HEIGHT(format->fmt.pix.bytesperline);
++        break;
++#endif
+ #ifdef DRM_FORMAT_MOD_ALLWINNER_TILED
+     case V4L2_PIX_FMT_SUNXI_TILED_NV12:
+         layer->format = DRM_FORMAT_NV12;
+@@ -221,10 +250,26 @@ static int v4l2_request_set_drm_descriptor(V4L2RequestDescriptor *req, struct v4
+     layer->planes[0].object_index = 0;
+     layer->planes[0].offset = 0;
+     layer->planes[0].pitch = V4L2_TYPE_IS_MULTIPLANAR(format->type) ? format->fmt.pix_mp.plane_fmt[0].bytesperline : format->fmt.pix.bytesperline;
+-
+-    layer->planes[1].object_index = 0;
+-    layer->planes[1].offset = layer->planes[0].pitch * (V4L2_TYPE_IS_MULTIPLANAR(format->type) ? format->fmt.pix_mp.height : format->fmt.pix.height);
+-    layer->planes[1].pitch = layer->planes[0].pitch;
++#if CONFIG_SAND
++    if (pixelformat == V4L2_PIX_FMT_NV12_COL128) {
++        layer->planes[1].object_index = 0;
++        layer->planes[1].offset = format->fmt.pix.height * 128;
++        layer->planes[0].pitch = format->fmt.pix.width;
++        layer->planes[1].pitch = format->fmt.pix.width;
++    }
++    else if (pixelformat == V4L2_PIX_FMT_NV12_10_COL128) {
++        layer->planes[1].object_index = 0;
++        layer->planes[1].offset = format->fmt.pix.height * 128;
++        layer->planes[0].pitch = format->fmt.pix.width * 2; // Lies but it keeps DRM import happy
++        layer->planes[1].pitch = format->fmt.pix.width * 2;
++    }
++    else
++#endif
++    {
++        layer->planes[1].object_index = 0;
++        layer->planes[1].offset = layer->planes[0].pitch * (V4L2_TYPE_IS_MULTIPLANAR(format->type) ? format->fmt.pix_mp.height : format->fmt.pix.height);
++        layer->planes[1].pitch = layer->planes[0].pitch;
++    }
+ 
+     return 0;
+ }
+@@ -291,8 +336,24 @@ static int v4l2_request_queue_decode(AVCodecContext *avctx, AVFrame *frame, stru
+         return -1;
+     }
+ 
++    ret = ioctl(req->request_fd, MEDIA_REQUEST_IOC_REINIT, NULL);
++    if (ret < 0) {
++        av_log(avctx, AV_LOG_ERROR, "%s: reinit request %d failed, %s (%d)\n", __func__, req->request_fd, strerror(errno), errno);
++        return -1;
++    }
++
+     if (last_slice) {
++        if (ff_v4l2_phase_started(&req->phase)) {
++            ff_v4l2_phase_release(&req->phase, 0);
++            ff_v4l2_phase_claim(&req->phase, 1);
++        }
++
+         ret = v4l2_request_dequeue_buffer(ctx, &req->capture);
++
++        if (ff_v4l2_phase_started(&req->phase)) {
++            ff_v4l2_phase_release(&req->phase, 1);
++        }
++
+         if (ret < 0) {
+             av_log(avctx, AV_LOG_ERROR, "%s: dequeue capture buffer %d failed for request %d, %s (%d)\n", __func__, req->capture.index, req->request_fd, strerror(errno), errno);
+             return -1;
+@@ -302,12 +363,6 @@ static int v4l2_request_queue_decode(AVCodecContext *avctx, AVFrame *frame, stru
+     // TODO: check errors
+     // buffer.flags & V4L2_BUF_FLAG_ERROR
+ 
+-    ret = ioctl(req->request_fd, MEDIA_REQUEST_IOC_REINIT, NULL);
+-    if (ret < 0) {
+-        av_log(avctx, AV_LOG_ERROR, "%s: reinit request %d failed, %s (%d)\n", __func__, req->request_fd, strerror(errno), errno);
+-        return -1;
+-    }
+-
+     if (last_slice)
+         return v4l2_request_set_drm_descriptor(req, &ctx->format);
+ 
+@@ -466,7 +521,8 @@ static int v4l2_request_probe_video_device(struct udev_device *device, AVCodecCo
+         goto fail;
+     }
+ 
+-    ctx->video_fd = open(path, O_RDWR | O_NONBLOCK, 0);
++//    ctx->video_fd = open(path, O_RDWR | O_NONBLOCK, 0);
++    ctx->video_fd = open(path, O_RDWR, 0);
+     if (ctx->video_fd < 0) {
+         av_log(avctx, AV_LOG_ERROR, "%s: opening %s failed, %s (%d)\n", __func__, path, strerror(errno), errno);
+         ret = AVERROR(EINVAL);
+@@ -957,6 +1013,14 @@ int ff_v4l2_request_frame_params(AVCodecContext *avctx, AVBufferRef *hw_frames_c
+     } else {
+         hwfc->width = ctx->format.fmt.pix.width;
+         hwfc->height = ctx->format.fmt.pix.height;
++#if CONFIG_SAND
++        if (ctx->format.fmt.pix.pixelformat == V4L2_PIX_FMT_NV12_COL128) {
++            hwfc->sw_format = AV_PIX_FMT_RPI4_8;
++        }
++        else if (ctx->format.fmt.pix.pixelformat == V4L2_PIX_FMT_NV12_10_COL128) {
++            hwfc->sw_format = AV_PIX_FMT_RPI4_10;
++        }
++#endif
+     }
+ 
+     hwfc->pool = av_buffer_pool_init2(sizeof(V4L2RequestDescriptor), avctx, v4l2_request_frame_alloc, v4l2_request_pool_free);
+diff --git a/libavcodec/v4l2_request.h b/libavcodec/v4l2_request.h
+index 58d2aa70af..20b56cfbfb 100644
+--- a/libavcodec/v4l2_request.h
++++ b/libavcodec/v4l2_request.h
+@@ -22,6 +22,7 @@
+ #include <linux/videodev2.h>
+ 
+ #include "libavutil/hwcontext_drm.h"
++#include "v4l2_phase.h"
+ 
+ typedef struct V4L2RequestContext {
+     int video_fd;
+@@ -43,15 +44,33 @@ typedef struct V4L2RequestBuffer {
+     struct v4l2_buffer buffer;
+ } V4L2RequestBuffer;
+ 
++struct V4l2PhaseControl;
++
++typedef struct V4L2PhaseEnv {
++    struct V4L2PhaseEnv * next;
++    struct V4L2PhaseControl * ctrl;
++    unsigned int order;
++} V4L2PhaseEnv;
++
+ typedef struct V4L2RequestDescriptor {
+     AVDRMFrameDescriptor drm;
+     int request_fd;
+     V4L2RequestBuffer output;
+     V4L2RequestBuffer capture;
++
++    // Phase control
++    V4L2PhaseInfo phase;
+ } V4L2RequestDescriptor;
+ 
+ uint64_t ff_v4l2_request_get_capture_timestamp(AVFrame *frame);
+ 
++// Sets phase control on this frame & gives it an order
++int ff_v4l2_request_start_phase_control(AVFrame *frame, struct V4L2PhaseControl * phase);
++
++// Had error - release all phases
++void ff_v4l2_request_abort_phase_control(AVFrame *frame);
++
++
+ int ff_v4l2_request_reset_frame(AVCodecContext *avctx, AVFrame *frame);
+ 
+ int ff_v4l2_request_append_output_buffer(AVCodecContext *avctx, AVFrame *frame, const uint8_t *data, uint32_t size);
+diff --git a/libavcodec/v4l2_request_hevc.c b/libavcodec/v4l2_request_hevc.c
+index 7e77c83e4e..3f813b8520 100644
+--- a/libavcodec/v4l2_request_hevc.c
++++ b/libavcodec/v4l2_request_hevc.c
+@@ -20,6 +20,7 @@
+ #include "hwconfig.h"
+ #include "v4l2_request.h"
+ #include "hevc-ctrls.h"
++#include "v4l2_phase.h"
+ 
+ #define MAX_SLICES 16
+ 
+@@ -37,6 +38,9 @@ typedef struct V4L2RequestContextHEVC {
+     int decode_mode;
+     int start_code;
+     int max_slices;
++
++    unsigned int order;
++    V4L2PhaseControl * pctrl;
+ } V4L2RequestContextHEVC;
+ 
+ static uint8_t nalu_slice_start_code[] = { 0x00, 0x00, 0x01 };
+@@ -195,6 +199,9 @@ static void v4l2_request_hevc_fill_slice_params(const HEVCContext *h,
+     if (sh->slice_loop_filter_across_slices_enabled_flag)
+         slice_params->flags |= V4L2_HEVC_SLICE_PARAMS_FLAG_SLICE_LOOP_FILTER_ACROSS_SLICES_ENABLED;
+ 
++    if (sh->dependent_slice_segment_flag)
++        slice_params->flags |= V4L2_HEVC_SLICE_PARAMS_FLAG_DEPENDENT_SLICE_SEGMENT;
++
+     for (i = 0; i < FF_ARRAY_ELEMS(h->DPB); i++) {
+         const HEVCFrame *frame = &h->DPB[i];
+         if (frame != pic && (frame->flags & (HEVC_FRAME_FLAG_LONG_REF | HEVC_FRAME_FLAG_SHORT_REF))) {
+@@ -305,6 +312,8 @@ static int v4l2_request_hevc_start_frame(AVCodecContext *avctx,
+                             sps->scaling_list_enable_flag ?
+                             &sps->scaling_list : NULL;
+     V4L2RequestControlsHEVC *controls = h->ref->hwaccel_picture_private;
++    V4L2RequestContextHEVC * const ctx = avctx->internal->hwaccel_priv_data;
++    int rv;
+ 
+     fill_sps(&controls->sps, h);
+ 
+@@ -407,7 +416,14 @@ static int v4l2_request_hevc_start_frame(AVCodecContext *avctx,
+     controls->first_slice = 1;
+     controls->num_slices = 0;
+ 
+-    return ff_v4l2_request_reset_frame(avctx, h->ref->frame);
++    if ((rv = ff_v4l2_request_reset_frame(avctx, h->ref->frame)) != 0)
++        return rv;
++
++    ff_v4l2_request_start_phase_control(h->ref->frame, ctx->pctrl);
++
++    ff_thread_finish_setup(avctx); // Allow next thread to enter rpi_hevc_start_frame
++
++    return 0;
+ }
+ 
+ static int v4l2_request_hevc_queue_decode(AVCodecContext *avctx, int last_slice)
+@@ -480,9 +496,19 @@ static int v4l2_request_hevc_decode_slice(AVCodecContext *avctx, const uint8_t *
+     return 0;
+ }
+ 
++static void v4l2_request_hevc_abort_frame(AVCodecContext * const avctx) {
++    const HEVCContext *h = avctx->priv_data;
++
++    if (h->ref != NULL)
++        ff_v4l2_request_abort_phase_control(h->ref->frame);
++}
++
+ static int v4l2_request_hevc_end_frame(AVCodecContext *avctx)
+ {
+-    return v4l2_request_hevc_queue_decode(avctx, 1);
++    int rv = v4l2_request_hevc_queue_decode(avctx, 1);
++    if (rv < 0)
++        v4l2_request_hevc_abort_frame(avctx);
++    return rv;
+ }
+ 
+ static int v4l2_request_hevc_set_controls(AVCodecContext *avctx)
+@@ -528,9 +554,17 @@ static int v4l2_request_hevc_set_controls(AVCodecContext *avctx)
+     return ff_v4l2_request_set_controls(avctx, control, FF_ARRAY_ELEMS(control));
+ }
+ 
++static int v4l2_request_hevc_uninit(AVCodecContext *avctx)
++{
++    V4L2RequestContextHEVC * const ctx = avctx->internal->hwaccel_priv_data;
++    ff_v4l2_phase_control_deletez(&ctx->pctrl);
++    return ff_v4l2_request_uninit(avctx);
++}
++
+ static int v4l2_request_hevc_init(AVCodecContext *avctx)
+ {
+     const HEVCContext *h = avctx->priv_data;
++    V4L2RequestContextHEVC * const ctx = avctx->internal->hwaccel_priv_data;
+     struct v4l2_ctrl_hevc_sps sps;
+     int ret;
+ 
+@@ -542,6 +576,9 @@ static int v4l2_request_hevc_init(AVCodecContext *avctx)
+         },
+     };
+ 
++    if ((ctx->pctrl = ff_v4l2_phase_control_new(2)) == NULL)
++        return AVERROR(ENOMEM);
++
+     fill_sps(&sps, h);
+ 
+     ret = ff_v4l2_request_init(avctx, V4L2_PIX_FMT_HEVC_SLICE, 4 * 1024 * 1024, control, FF_ARRAY_ELEMS(control));
+@@ -559,10 +596,11 @@ const AVHWAccel ff_hevc_v4l2request_hwaccel = {
+     .start_frame    = v4l2_request_hevc_start_frame,
+     .decode_slice   = v4l2_request_hevc_decode_slice,
+     .end_frame      = v4l2_request_hevc_end_frame,
++    .abort_frame    = v4l2_request_hevc_abort_frame,
+     .frame_priv_data_size = sizeof(V4L2RequestControlsHEVC),
+     .init           = v4l2_request_hevc_init,
+-    .uninit         = ff_v4l2_request_uninit,
++    .uninit         = v4l2_request_hevc_uninit,
+     .priv_data_size = sizeof(V4L2RequestContextHEVC),
+     .frame_params   = ff_v4l2_request_frame_params,
+-    .caps_internal  = HWACCEL_CAP_ASYNC_SAFE,
++    .caps_internal  = HWACCEL_CAP_ASYNC_SAFE | HWACCEL_CAP_MT_SAFE,
+ };
+diff --git a/libavutil/hwcontext_drm.c b/libavutil/hwcontext_drm.c
+index aa4794c5e6..9ba8b7b2dd 100644
+--- a/libavutil/hwcontext_drm.c
++++ b/libavutil/hwcontext_drm.c
+@@ -21,6 +21,7 @@
+ #include <unistd.h>
+ 
+ #include <drm.h>
++#include <drm/drm_fourcc.h>
+ #include <xf86drm.h>
+ 
+ #include "avassert.h"
+@@ -28,6 +29,7 @@
+ #include "hwcontext_drm.h"
+ #include "hwcontext_internal.h"
+ #include "imgutils.h"
++#include "libavutil/rpi_sand_fns.h"
+ 
+ 
+ static void drm_device_free(AVHWDeviceContext *hwdev)
+@@ -125,6 +127,9 @@ static int drm_map_frame(AVHWFramesContext *hwfc,
+     if (flags & AV_HWFRAME_MAP_WRITE)
+         mmap_prot |= PROT_WRITE;
+ 
++    if (dst->format == AV_PIX_FMT_NONE)
++        dst->format = hwfc->sw_format;
++
+     av_assert0(desc->nb_objects <= AV_DRM_MAX_PLANES);
+     for (i = 0; i < desc->nb_objects; i++) {
+         addr = mmap(NULL, desc->objects[i].size, mmap_prot, MAP_SHARED,
+@@ -156,6 +161,23 @@ static int drm_map_frame(AVHWFramesContext *hwfc,
+ 
+     dst->width  = src->width;
+     dst->height = src->height;
++    dst->crop_top    = src->crop_top;
++    dst->crop_bottom = src->crop_bottom;
++    dst->crop_left   = src->crop_left;
++    dst->crop_right  = src->crop_right;
++
++#if CONFIG_SAND
++    // Rework for sand frames
++    if (av_rpi_is_sand_frame(dst)) {
++        // As it stands the sand formats hold stride2 in linesize[3]
++        // linesize[0] & [1] contain stride1 which is always 128 for everything we do
++        // * Arguably this should be reworked s.t. stride2 is in linesize[0] & [1]
++        dst->linesize[3] = fourcc_mod_broadcom_param(desc->objects[0].format_modifier);
++        dst->linesize[0] = 128;
++        dst->linesize[1] = 128;
++        // *** Are we sure src->height is actually what we want ???
++    }
++#endif
+ 
+     err = ff_hwframe_map_create(src->hw_frames_ctx, dst, src,
+                                 &drm_unmap_frame, map);
+@@ -183,7 +205,15 @@ static int drm_transfer_get_formats(AVHWFramesContext *ctx,
+     if (!pix_fmts)
+         return AVERROR(ENOMEM);
+ 
+-    pix_fmts[0] = ctx->sw_format;
++    // **** Offer native sand too ????
++    pix_fmts[0] =
++#if CONFIG_SAND
++        ctx->sw_format == AV_PIX_FMT_RPI4_8 || ctx->sw_format == AV_PIX_FMT_SAND128 ?
++            AV_PIX_FMT_YUV420P :
++        ctx->sw_format == AV_PIX_FMT_RPI4_10 ?
++            AV_PIX_FMT_YUV420P10LE :
++#endif
++            ctx->sw_format;
+     pix_fmts[1] = AV_PIX_FMT_NONE;
+ 
+     *formats = pix_fmts;
+@@ -202,18 +232,82 @@ static int drm_transfer_data_from(AVHWFramesContext *hwfc,
+     map = av_frame_alloc();
+     if (!map)
+         return AVERROR(ENOMEM);
+-    map->format = dst->format;
+ 
++    // Map to default
++    map->format = AV_PIX_FMT_NONE;
+     err = drm_map_frame(hwfc, map, src, AV_HWFRAME_MAP_READ);
+     if (err)
+         goto fail;
+ 
+-    map->width  = dst->width;
+-    map->height = dst->height;
++#if 0
++    av_log(hwfc, AV_LOG_INFO, "%s: src fmt=%d (%d), dst fmt=%d (%d) s=%dx%d l=%d/%d/%d/%d, d=%dx%d l=%d/%d/%d\n", __func__,
++           hwfc->sw_format, AV_PIX_FMT_RPI4_8, dst->format, AV_PIX_FMT_YUV420P10LE,
++           map->width, map->height,
++           map->linesize[0],
++           map->linesize[1],
++           map->linesize[2],
++           map->linesize[3],
++           dst->width, dst->height,
++           dst->linesize[0],
++           dst->linesize[1],
++           dst->linesize[2]);
++#endif
++#if CONFIG_SAND
++    if (av_rpi_is_sand_frame(map)) {
++        unsigned int stride2 = map->linesize[3];
++        const unsigned int w = FFMIN(dst->width, av_frame_cropped_width(map));
++        const unsigned int h = FFMIN(dst->height, av_frame_cropped_height(map));
++
++        if (map->format == AV_PIX_FMT_RPI4_8 && dst->format == AV_PIX_FMT_YUV420P) {
++            av_rpi_sand_to_planar_y8(dst->data[0], dst->linesize[0],
++                                     map->data[0],
++                                     128, stride2,
++                                     map->crop_left, map->crop_top,
++                                     w, h);
++            av_rpi_sand_to_planar_c8(dst->data[1], dst->linesize[1],
++                                     dst->data[2], dst->linesize[2],
++                                     map->data[1],
++                                     128, stride2,
++                                     map->crop_left / 2, map->crop_top / 2,
++                                     w / 2, h / 2);
++        }
++        else if (map->format == AV_PIX_FMT_RPI4_10 && dst->format == AV_PIX_FMT_YUV420P10LE) {
++            av_rpi_sand30_to_planar_y16(dst->data[0], dst->linesize[0],
++                                     map->data[0],
++                                     128, stride2,
++                                     map->crop_left, map->crop_top,
++                                     w, h);  // *** ??? crop
++            av_rpi_sand30_to_planar_c16(dst->data[1], dst->linesize[1],
++                                     dst->data[2], dst->linesize[2],
++                                     map->data[1],
++                                     128, stride2,
++                                     map->crop_left / 2, map->crop_top / 2,
++                                     w / 2, h / 2);
++        }
++        else
++        {
++            av_log(hwfc, AV_LOG_ERROR, "%s: Incompatible output pixfmt for sand\n", __func__);
++            err = AVERROR(EINVAL);
++            goto fail;
++        }
++
++        dst->width = w;
++        dst->height = h;
++    }
++    else
++#endif
++    {
++        // Kludge mapped h/w s.t. frame_copy works
++        map->width  = dst->width;
++        map->height = dst->height;
++        err = av_frame_copy(dst, map);
++    }
+ 
+-    err = av_frame_copy(dst, map);
+     if (err)
++    {
++        av_log(hwfc, AV_LOG_ERROR, "%s: Copy fail\n", __func__);
+         goto fail;
++    }
+ 
+     err = 0;
+ fail:
+@@ -228,7 +322,10 @@ static int drm_transfer_data_to(AVHWFramesContext *hwfc,
+     int err;
+ 
+     if (src->width > hwfc->width || src->height > hwfc->height)
++    {
++        av_log(hwfc, AV_LOG_ERROR, "%s: H/w mismatch: %d/%d, %d/%d\n", __func__, dst->width, hwfc->width, dst->height, hwfc->height);
+         return AVERROR(EINVAL);
++    }
+ 
+     map = av_frame_alloc();
+     if (!map)
+diff --git a/libavutil/rpi_sand_fns.c b/libavutil/rpi_sand_fns.c
+index 5651727fb3..7cb40c0de0 100644
+--- a/libavutil/rpi_sand_fns.c
++++ b/libavutil/rpi_sand_fns.c
+@@ -42,7 +42,7 @@ Authors: John Cox
+ #include "rpi_sand_fn_pw.h"
+ #undef PW
+ 
+-#if HAVE_NEON
++#if ARCH_ARM && HAVE_NEON
+ void rpi_sand128b_stripe_to_8_10(uint8_t * dest, const uint8_t * src1, const uint8_t * src2, unsigned int lines);
+ #endif
+ 
+@@ -225,7 +225,7 @@ void av_rpi_sand16_to_sand8(uint8_t * dst, const unsigned int dst_stride1, const
+     // We make no effort to copy an exact width - round up to nearest src stripe
+     // as we will always have storage in dest for that
+ 
+-#if HAVE_NEON
++#if ARCH_ARM && HAVE_NEON
+     if (shr == 3 && src_stride1 == 128) {
+         for (j = 0; j + n < w; j += dst_stride1) {
+             uint8_t * d = dst + j * dst_stride2;
+diff --git a/pi-util/conf_native.sh b/pi-util/conf_native.sh
+index c159d975c2..285bc1b99c 100644
+--- a/pi-util/conf_native.sh
++++ b/pi-util/conf_native.sh
+@@ -21,7 +21,9 @@ INC_PREFIX=$USR_PREFIX/include/arm-linux-gnueabihf
+  --disable-thumb\
+  --enable-mmal\
+  --enable-rpi\
++ --enable-v4l2-request\
+  --enable-libdrm\
++ --enable-libudev\
+  --enable-vout-drm\
+  --extra-cflags="-ggdb $RPI_KEEPS $RPI_DEFINES $RPI_INCLUDES"\
+  --extra-cxxflags="$RPI_DEFINES $RPI_INCLUDES"\
+-- 
+2.29.2
+

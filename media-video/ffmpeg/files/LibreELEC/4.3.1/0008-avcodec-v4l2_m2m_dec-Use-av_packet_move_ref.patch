@@ -1,0 +1,27 @@
+From ce72275b8f62886997e9d330c60eafbb7230d42a Mon Sep 17 00:00:00 2001
+From: Andriy Gelman <andriy.gelman@gmail.com>
+Date: Tue, 5 May 2020 01:54:54 -0400
+Subject: [PATCH 08/54] avcodec/v4l2_m2m_dec: Use av_packet_move_ref()
+
+Signed-off-by: Andriy Gelman <andriy.gelman@gmail.com>
+---
+ libavcodec/v4l2_m2m_dec.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/libavcodec/v4l2_m2m_dec.c b/libavcodec/v4l2_m2m_dec.c
+index a2ea0ff73a..45e9a8e9fe 100644
+--- a/libavcodec/v4l2_m2m_dec.c
++++ b/libavcodec/v4l2_m2m_dec.c
+@@ -142,8 +142,7 @@ static int v4l2_receive_frame(AVCodecContext *avctx, AVFrame *frame)
+     int ret;
+ 
+     if (s->buf_pkt.size) {
+-        avpkt = s->buf_pkt;
+-        memset(&s->buf_pkt, 0, sizeof(AVPacket));
++        av_packet_move_ref(&avpkt, &s->buf_pkt);
+     } else {
+         ret = ff_decode_get_packet(avctx, &avpkt);
+         if (ret < 0 && ret != AVERROR_EOF)
+-- 
+2.29.2
+

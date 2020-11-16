@@ -1,0 +1,61 @@
+From 9a8f451844ea6118295618dde7e02c2d2ea2868e Mon Sep 17 00:00:00 2001
+From: John Cox <jc@kynesim.co.uk>
+Date: Fri, 19 Jun 2020 16:21:29 +0100
+Subject: [PATCH 42/54] Add an option to avoid auto-conversion from hw to sw
+
+---
+ fftools/ffmpeg.c     | 3 +--
+ fftools/ffmpeg.h     | 1 +
+ fftools/ffmpeg_opt.c | 3 +++
+ 3 files changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/fftools/ffmpeg.c b/fftools/ffmpeg.c
+index 9dda045fb7..faa8501dd0 100644
+--- a/fftools/ffmpeg.c
++++ b/fftools/ffmpeg.c
+@@ -2404,8 +2404,7 @@ static int decode_video(InputStream *ist, AVPacket *pkt, int *got_output, int64_
+         decoded_frame->top_field_first = ist->top_field_first;
+ 
+     ist->frames_decoded++;
+-
+-    if (ist->hwaccel_retrieve_data && decoded_frame->format == ist->hwaccel_pix_fmt) {
++    if (!no_cvt_hw && ist->hwaccel_retrieve_data && decoded_frame->format == ist->hwaccel_pix_fmt) {
+         err = ist->hwaccel_retrieve_data(ist->dec_ctx, decoded_frame);
+         if (err < 0)
+             goto fail;
+diff --git a/fftools/ffmpeg.h b/fftools/ffmpeg.h
+index 0b5cfc226d..55d4db293e 100644
+--- a/fftools/ffmpeg.h
++++ b/fftools/ffmpeg.h
+@@ -591,6 +591,7 @@ extern int video_sync_method;
+ extern float frame_drop_threshold;
+ extern int do_benchmark;
+ extern int do_benchmark_all;
++extern int no_cvt_hw;
+ extern int do_deinterlace;
+ extern int do_hex_dump;
+ extern int do_pkt_dump;
+diff --git a/fftools/ffmpeg_opt.c b/fftools/ffmpeg_opt.c
+index 1de7dfe713..98207be2e2 100644
+--- a/fftools/ffmpeg_opt.c
++++ b/fftools/ffmpeg_opt.c
+@@ -165,6 +165,7 @@ float frame_drop_threshold = 0;
+ int do_deinterlace    = 0;
+ int do_benchmark      = 0;
+ int do_benchmark_all  = 0;
++int no_cvt_hw         = 0;
+ int do_hex_dump       = 0;
+ int do_pkt_dump       = 0;
+ int copy_ts           = 0;
+@@ -3472,6 +3473,8 @@ const OptionDef options[] = {
+         "add timings for benchmarking" },
+     { "benchmark_all",  OPT_BOOL | OPT_EXPERT,                       { &do_benchmark_all },
+       "add timings for each task" },
++    { "no_cvt_hw",      OPT_BOOL | OPT_EXPERT,                       { &no_cvt_hw },
++      "do not auto-convert hw frames to sw" },
+     { "progress",       HAS_ARG | OPT_EXPERT,                        { .func_arg = opt_progress },
+       "write program-readable progress information", "url" },
+     { "stdin",          OPT_BOOL | OPT_EXPERT,                       { &stdin_interaction },
+-- 
+2.29.2
+

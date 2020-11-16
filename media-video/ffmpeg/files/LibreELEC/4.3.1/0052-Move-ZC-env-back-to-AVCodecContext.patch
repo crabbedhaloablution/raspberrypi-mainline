@@ -1,0 +1,89 @@
+From b9cad1df00b5d972d96e24b7f5a602b2304a5023 Mon Sep 17 00:00:00 2001
+From: John Cox <jc@kynesim.co.uk>
+Date: Tue, 7 Jul 2020 17:58:31 +0100
+Subject: [PATCH 52/54] Move ZC env back to AVCodecContext
+
+---
+ libavcodec/avcodec.h     | 6 ++++++
+ libavcodec/rpi_zc.c      | 9 ++++-----
+ libavcodec/rpivid_hevc.c | 2 +-
+ 3 files changed, 11 insertions(+), 6 deletions(-)
+
+diff --git a/libavcodec/avcodec.h b/libavcodec/avcodec.h
+index d6e019bbe1..b0a8229df1 100644
+--- a/libavcodec/avcodec.h
++++ b/libavcodec/avcodec.h
+@@ -2351,6 +2351,12 @@ typedef struct AVCodecContext {
+      * - encoding: set by user
+      */
+     int export_side_data;
++
++    /**
++     * Env used by ZC setup
++     */
++    void * zc_env;
++
+ } AVCodecContext;
+ 
+ #if FF_API_CODEC_GET_SET
+diff --git a/libavcodec/rpi_zc.c b/libavcodec/rpi_zc.c
+index 02f1921ee5..aa37964661 100644
+--- a/libavcodec/rpi_zc.c
++++ b/libavcodec/rpi_zc.c
+@@ -1,7 +1,6 @@
+ #include "config.h"
+ 
+ #include "avcodec.h"
+-#include "internal.h"
+ #include "rpi_mem.h"
+ #include "rpi_mailbox.h"
+ #include "rpi_zc.h"
+@@ -1163,7 +1162,7 @@ static int zc_get_buffer2(struct AVCodecContext *s, AVFrame *frame, int flags)
+     else if (frame->format == AV_PIX_FMT_YUV420P ||
+              av_rpi_is_sand_frame(frame))
+     {
+-        if ((rv = av_rpi_zc_get_buffer(s->internal->zc_env, frame)) == 0)
++        if ((rv = av_rpi_zc_get_buffer(s->zc_env, frame)) == 0)
+             rv = av_rpi_zc_resolve_frame(frame, ZC_RESOLVE_ALLOC_VALID);
+     }
+     else
+@@ -1205,7 +1204,7 @@ int av_rpi_zc_init2(struct AVCodecContext * const s,
+         .thread_safe_callbacks = s->thread_safe_callbacks
+     };
+ 
+-    s->internal->zc_env = zc;
++    s->zc_env = zc;
+     s->get_buffer2 = zc_get_buffer2;
+     s->thread_safe_callbacks = 1;
+     return 0;
+@@ -1213,12 +1212,12 @@ int av_rpi_zc_init2(struct AVCodecContext * const s,
+ 
+ void av_rpi_zc_uninit2(struct AVCodecContext * const s)
+ {
+-    ZcEnv * const zc = s->internal->zc_env;
++    ZcEnv * const zc = s->zc_env;
+ 
+     av_assert0(av_rpi_zc_in_use(s));
+ 
+     s->get_buffer2 = zc->old.get_buffer2;
+-    s->internal->zc_env = NULL;
++    s->zc_env = NULL;
+     s->thread_safe_callbacks = zc->old.thread_safe_callbacks;
+ 
+     av_rpi_zc_env_release(zc);
+diff --git a/libavcodec/rpivid_hevc.c b/libavcodec/rpivid_hevc.c
+index 6a7e085da9..7b4862e916 100644
+--- a/libavcodec/rpivid_hevc.c
++++ b/libavcodec/rpivid_hevc.c
+@@ -1777,7 +1777,7 @@ static int rpivid_hevc_alloc_frame(AVCodecContext * avctx, AVFrame *frame)
+ 
+     if (av_rpi_zc_in_use(avctx))
+     {
+-        const AVZcEnvPtr zc = avctx->internal->zc_env;
++        const AVZcEnvPtr zc = avctx->zc_env;
+         av_rpi_zc_set_decoder_pool_size(zc, pool_req);
+         av_rpi_zc_get_buffer(zc, frame);   // get_buffer2 would alloc
+     }
+-- 
+2.29.2
+

@@ -1,0 +1,26 @@
+From e64a6b2c6d4e85e714026a413e3e01b0c6407baa Mon Sep 17 00:00:00 2001
+From: Rechi <Rechi@users.noreply.github.com>
+Date: Tue, 21 Nov 2017 08:16:53 +0100
+Subject: [PATCH 03/54] common.mak: never ignore an error if strip doesn't
+ succeed
+
+---
+ ffbuild/common.mak | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/ffbuild/common.mak b/ffbuild/common.mak
+index a60d27c9bd..9efe741086 100644
+--- a/ffbuild/common.mak
++++ b/ffbuild/common.mak
+@@ -79,7 +79,7 @@ COMPILE_NVCC = $(call COMPILE,NVCC)
+ 
+ %.o: %.asm
+ 	$(COMPILE_X86ASM)
+-	-$(if $(ASMSTRIPFLAGS), $(STRIP) $(ASMSTRIPFLAGS) $@)
++	$(if $(STRIP), $(if $(ASMSTRIPFLAGS), $(STRIP) $(ASMSTRIPFLAGS) $@))
+ 
+ %.o: %.rc
+ 	$(WINDRES) $(IFLAGS) --preprocessor "$(DEPWINDRES) -E -xc-header -DRC_INVOKED $(CC_DEPFLAGS)" -o $@ $<
+-- 
+2.29.2
+

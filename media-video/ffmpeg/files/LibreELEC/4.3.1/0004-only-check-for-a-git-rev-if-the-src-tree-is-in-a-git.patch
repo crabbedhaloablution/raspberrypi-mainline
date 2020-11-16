@@ -1,0 +1,34 @@
+From 9d664b80fd0fea871bc1a3e784db7d7d6eee5af3 Mon Sep 17 00:00:00 2001
+From: wsnipex <wsnipex@a1.net>
+Date: Tue, 21 Nov 2017 08:16:53 +0100
+Subject: [PATCH 04/54] only check for a git rev if the src tree is in a git
+ repo
+
+fixes the version string when building from the kodi depends src tree
+---
+ ffbuild/version.sh | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/ffbuild/version.sh b/ffbuild/version.sh
+index edc4dd33c5..239a138ca7 100755
+--- a/ffbuild/version.sh
++++ b/ffbuild/version.sh
+@@ -2,6 +2,7 @@
+ 
+ # Usage: version.sh <ffmpeg-root-dir> <output-version.h> <extra-version>
+ 
++if [ -d $1/.git ]; then  # only check for a git rev, if the src tree is in a git repo
+ # check for git short hash
+ if ! test "$revision"; then
+     if (cd "$1" && grep git RELEASE 2> /dev/null >/dev/null) ; then
+@@ -27,6 +28,7 @@ if [ -z "$revision" ]; then
+       git_hash="${srcdir##*-}";;
+   esac
+ fi
++fi
+ 
+ # no revision number found
+ test "$revision" || revision=$(cd "$1" && cat RELEASE 2> /dev/null)
+-- 
+2.29.2
+

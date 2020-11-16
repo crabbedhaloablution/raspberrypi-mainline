@@ -1,0 +1,24 @@
+From 783b8ba69a106a7ade98426595447427f4f98fc3 Mon Sep 17 00:00:00 2001
+From: John Cox <jc@kynesim.co.uk>
+Date: Tue, 7 Jul 2020 19:04:58 +0100
+Subject: [PATCH 53/54] Update zc_env along with getbuffer2 if updating context
+
+---
+ libavcodec/pthread_frame.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/libavcodec/pthread_frame.c b/libavcodec/pthread_frame.c
+index f890f99931..e6a6621cca 100644
+--- a/libavcodec/pthread_frame.c
++++ b/libavcodec/pthread_frame.c
+@@ -337,6 +337,7 @@ static int update_context_from_user(AVCodecContext *dst, AVCodecContext *src)
+ 
+     dst->draw_horiz_band= src->draw_horiz_band;
+     dst->get_buffer2    = src->get_buffer2;
++    dst->zc_env         = src->zc_env;
+ 
+     dst->opaque   = src->opaque;
+     dst->debug    = src->debug;
+-- 
+2.29.2
+
