@@ -1,7 +1,7 @@
 From 67e18b42bdf51a2fc8eab3865c7f6e7e8b4e691b Mon Sep 17 00:00:00 2001
 From: Lukas Rusak <lorusak@gmail.com>
 Date: Wed, 6 May 2020 11:12:58 -0700
-Subject: [PATCH 16/54] libavcodec: v4l2m2m: add option to specify pixel format
+Subject: [PATCH 16/55] libavcodec: v4l2m2m: add option to specify pixel format
  used by the decoder
 
 ---

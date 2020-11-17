@@ -1,7 +1,7 @@
 From fc35bd05a37cf2d26c53c83094bae8afb1df5023 Mon Sep 17 00:00:00 2001
 From: Lukas Rusak <lorusak@gmail.com>
 Date: Thu, 16 Aug 2018 21:10:13 -0700
-Subject: [PATCH 11/54] libavcodec: v4l2m2m: set format_modifier to
+Subject: [PATCH 11/55] libavcodec: v4l2m2m: set format_modifier to
  DRM_FORMAT_MOD_LINEAR
 
 ---

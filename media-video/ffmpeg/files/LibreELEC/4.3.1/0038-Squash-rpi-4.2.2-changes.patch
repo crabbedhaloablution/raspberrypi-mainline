@@ -1,7 +1,7 @@
 From 85c177a25d604b688201791cc4420d9d490b6f95 Mon Sep 17 00:00:00 2001
 From: John Cox <jc@kynesim.co.uk>
 Date: Mon, 22 Jun 2020 10:59:52 +0100
-Subject: [PATCH 38/54] Squash rpi 4.2.2 changes
+Subject: [PATCH 38/55] Squash rpi 4.2.2 changes
 
 ---
  .gitignore                                    |    2 +

@@ -1,7 +1,7 @@
 From 48b5f8bf4af434315fcaefd61d813d9e3bfdd300 Mon Sep 17 00:00:00 2001
 From: John Cox <jc@kynesim.co.uk>
 Date: Thu, 2 Jul 2020 18:07:42 +0100
-Subject: [PATCH 47/54] Add rpi V4L2 formats and multi-thread requests
+Subject: [PATCH 47/55] Add rpi V4L2 formats and multi-thread requests
 
 ---
  configure                      |   2 +

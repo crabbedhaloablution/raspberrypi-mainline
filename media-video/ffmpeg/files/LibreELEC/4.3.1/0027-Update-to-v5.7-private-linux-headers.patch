@@ -1,7 +1,7 @@
 From 9f59331da9d94c9a45993f26a67062be89893124 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Sat, 2 May 2020 11:00:26 +0000
-Subject: [PATCH 27/54] Update to v5.7 private linux headers
+Subject: [PATCH 27/55] Update to v5.7 private linux headers
 
 ---
  libavcodec/h264-ctrls.h        | 2 ++

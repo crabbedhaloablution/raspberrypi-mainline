@@ -49,10 +49,14 @@
 	<flag name="postproc">Build and install libpostproc.</flag>
 	<flag name="rav1e">Enables AV1 encoding support via <pkg>media-video/rav1e</pkg>.</flag>
 	<flag name="rubberband">Adds time-stretching and pitch-shifting audio filter based on <pkg>media-libs/rubberband</pkg>.</flag>
+	<flag name="raspberry-pi">Adds decoder engine for 32-bit Raspberry Pi boards.</flag>
+	<flag name="raspberry-pi-2">Sets up correct alignment of transfers to the video engine for Raspberry Pi 2+ 32-bit userland.</flag>
+	<flag name="sand">Enables support for the Raspberry Pi SAND Videocore format</flag>
 	<flag name="snappy">Enable <pkg>app-arch/snappy</pkg> support. Required for e.g. Vidvox Hap encoder.</flag>
 	<flag name="srt">Enable support for Secure Reliable Transport (SRT) via <pkg>net-libs/srt</pkg></flag>
 	<flag name="ssh">Enable SSH/sftp support via <pkg>net-libs/libssh</pkg>.</flag>
 	<flag name="twolame">Enables MP2 encoding via <pkg>media-sound/twolame</pkg> as an alternative to the internal encoder.</flag>
+	<flag name="v4l2-request">Enables v4l2-request support (universal Linux API for stateless HW video codecs).</flag>
 	<flag name="vidstab">Enables video stabilization filter using vid.stab library (<pkg>media-libs/vidstab</pkg>).</flag>
 	<flag name="vpx">Enables VP8 and VP9 codec support using libvpx: Decoding does not require this to be enabled but libvpx can also be used for decoding; encoding requires this useflag to be enabled though.</flag>
 	<flag name="vulkan">Enables support for the vulkan API for GPU offload.</flag>

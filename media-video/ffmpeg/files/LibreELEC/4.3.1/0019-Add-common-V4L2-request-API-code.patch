@@ -1,7 +1,7 @@
 From e8eb57af794f04ad544373896003a74893ba4d78 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Sat, 15 Dec 2018 22:32:16 +0100
-Subject: [PATCH 19/54] Add common V4L2 request API code
+Subject: [PATCH 19/55] Add common V4L2 request API code
 
 Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
 ---

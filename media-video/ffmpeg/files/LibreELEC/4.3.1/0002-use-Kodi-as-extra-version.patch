@@ -1,7 +1,7 @@
 From 2f3bcd03e9b7fa1bec432c1f99e5303866f5298b Mon Sep 17 00:00:00 2001
 From: Rechi <Rechi@users.noreply.github.com>
 Date: Tue, 21 Nov 2017 08:16:53 +0100
-Subject: [PATCH 02/54] use Kodi as extra version
+Subject: [PATCH 02/55] use Kodi as extra version
 
 ---
  Makefile | 2 +-

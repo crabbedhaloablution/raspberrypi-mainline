@@ -1,7 +1,7 @@
 From 2bae1773a704dc860f82a2d7ca3e0a8466f43a75 Mon Sep 17 00:00:00 2001
 From: Jernej Skrabec <jernej.skrabec@siol.net>
 Date: Sat, 15 Dec 2018 22:32:16 +0100
-Subject: [PATCH 31/54] WIP: hevc scaling matrix
+Subject: [PATCH 31/55] WIP: hevc scaling matrix
 
 Signed-off-by: Jernej Skrabec <jernej.skrabec@siol.net>
 ---

@@ -1,7 +1,7 @@
 From 912640f4dcc98bd8b48635cb8d7e6afbb6dad357 Mon Sep 17 00:00:00 2001
 From: John Cox <jc@kynesim.co.uk>
 Date: Mon, 4 May 2020 17:24:27 +0100
-Subject: [PATCH 46/54] Allow extraction of vc_handle from zc
+Subject: [PATCH 46/55] Allow extraction of vc_handle from zc
 
 (cherry picked from commit 6185cc841530612783e49bc073ea83f68ba13b2a)
 ---

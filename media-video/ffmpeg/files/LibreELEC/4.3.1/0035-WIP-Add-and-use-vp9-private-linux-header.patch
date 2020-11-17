@@ -1,7 +1,7 @@
 From 714ddf7159dc6770c77479962ecc11cbda47c1c1 Mon Sep 17 00:00:00 2001
 From: Boris Brezillon <boris.brezillon@collabora.com>
 Date: Thu, 12 Dec 2019 16:13:55 +0100
-Subject: [PATCH 35/54] WIP: Add and use vp9 private linux header
+Subject: [PATCH 35/55] WIP: Add and use vp9 private linux header
 
 Signed-off-by: Boris Brezillon <boris.brezillon@collabora.com>
 ---

@@ -1,7 +1,7 @@
 From 3e638895653aca2d1dda0c853fa3400cf4077e95 Mon Sep 17 00:00:00 2001
 From: Lukas Rusak <lorusak@gmail.com>
 Date: Tue, 24 Apr 2018 23:00:23 -0700
-Subject: [PATCH 09/54] libavcodec: v4l2m2m: output AVDRMFrameDescriptor
+Subject: [PATCH 09/55] libavcodec: v4l2m2m: output AVDRMFrameDescriptor
 
 This allows for a zero-copy output by exporting the v4l2 buffer then wrapping that buffer
 in the AVDRMFrameDescriptor like it is done in rkmpp.

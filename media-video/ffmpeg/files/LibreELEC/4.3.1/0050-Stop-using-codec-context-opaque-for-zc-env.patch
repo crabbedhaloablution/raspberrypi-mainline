@@ -1,7 +1,7 @@
 From 5c4c7898323b05b67610ff140d31821ebce1f6b0 Mon Sep 17 00:00:00 2001
 From: John Cox <jc@kynesim.co.uk>
 Date: Tue, 7 Jul 2020 14:43:33 +0100
-Subject: [PATCH 50/54] Stop using codec context opaque for zc env
+Subject: [PATCH 50/55] Stop using codec context opaque for zc env
 
 ---
  libavcodec/internal.h    |  2 ++

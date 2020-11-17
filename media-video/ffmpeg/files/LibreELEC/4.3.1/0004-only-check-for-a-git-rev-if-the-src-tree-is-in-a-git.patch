@@ -1,7 +1,7 @@
 From 9d664b80fd0fea871bc1a3e784db7d7d6eee5af3 Mon Sep 17 00:00:00 2001
 From: wsnipex <wsnipex@a1.net>
 Date: Tue, 21 Nov 2017 08:16:53 +0100
-Subject: [PATCH 04/54] only check for a git rev if the src tree is in a git
+Subject: [PATCH 04/55] only check for a git rev if the src tree is in a git
  repo
 
 fixes the version string when building from the kodi depends src tree

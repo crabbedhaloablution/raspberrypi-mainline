@@ -1,7 +1,7 @@
 From b9cad1df00b5d972d96e24b7f5a602b2304a5023 Mon Sep 17 00:00:00 2001
 From: John Cox <jc@kynesim.co.uk>
 Date: Tue, 7 Jul 2020 17:58:31 +0100
-Subject: [PATCH 52/54] Move ZC env back to AVCodecContext
+Subject: [PATCH 52/55] Move ZC env back to AVCodecContext
 
 ---
  libavcodec/avcodec.h     | 6 ++++++

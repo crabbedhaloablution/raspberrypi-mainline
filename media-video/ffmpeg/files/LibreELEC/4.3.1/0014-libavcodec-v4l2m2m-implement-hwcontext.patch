@@ -1,7 +1,7 @@
 From 5ac2cd8146b0604bce8892a7881b82a3d557ddaf Mon Sep 17 00:00:00 2001
 From: Lukas Rusak <lorusak@gmail.com>
 Date: Mon, 24 Sep 2018 13:39:31 -0700
-Subject: [PATCH 14/54] libavcodec: v4l2m2m: implement hwcontext
+Subject: [PATCH 14/55] libavcodec: v4l2m2m: implement hwcontext
 
 ---
  libavcodec/v4l2_buffers.c | 22 ++++++++++++++++++++++

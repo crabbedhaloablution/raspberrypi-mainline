@@ -1,7 +1,7 @@
 From 4ec5c9e99a09cf039b4b110ff59fcdbf5cc85d1f Mon Sep 17 00:00:00 2001
 From: Andriy Gelman <andriy.gelman@gmail.com>
 Date: Tue, 28 Apr 2020 22:54:21 -0400
-Subject: [PATCH 07/54] avcodec/v4l2_m2m: Adapt to call close() on init fail
+Subject: [PATCH 07/55] avcodec/v4l2_m2m: Adapt to call close() on init fail
 
 This fixes several mem leaks when init of encoder/decoder failed.
 

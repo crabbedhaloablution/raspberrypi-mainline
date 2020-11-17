@@ -1,7 +1,7 @@
 From 9a8f451844ea6118295618dde7e02c2d2ea2868e Mon Sep 17 00:00:00 2001
 From: John Cox <jc@kynesim.co.uk>
 Date: Fri, 19 Jun 2020 16:21:29 +0100
-Subject: [PATCH 42/54] Add an option to avoid auto-conversion from hw to sw
+Subject: [PATCH 42/55] Add an option to avoid auto-conversion from hw to sw
 
 ---
  fftools/ffmpeg.c     | 3 +--

@@ -1,7 +1,7 @@
 From 783b8ba69a106a7ade98426595447427f4f98fc3 Mon Sep 17 00:00:00 2001
 From: John Cox <jc@kynesim.co.uk>
 Date: Tue, 7 Jul 2020 19:04:58 +0100
-Subject: [PATCH 53/54] Update zc_env along with getbuffer2 if updating context
+Subject: [PATCH 53/55] Update zc_env along with getbuffer2 if updating context
 
 ---
  libavcodec/pthread_frame.c | 1 +

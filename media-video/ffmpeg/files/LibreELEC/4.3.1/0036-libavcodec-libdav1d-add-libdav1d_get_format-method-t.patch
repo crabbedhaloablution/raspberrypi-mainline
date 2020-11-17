@@ -1,7 +1,7 @@
 From bf88132a25fa6926cd4d64a214e1a383a217c326 Mon Sep 17 00:00:00 2001
 From: Lukas Rusak <lorusak@gmail.com>
 Date: Wed, 10 Apr 2019 13:39:21 -0700
-Subject: [PATCH 36/54] libavcodec/libdav1d: add libdav1d_get_format method to
+Subject: [PATCH 36/55] libavcodec/libdav1d: add libdav1d_get_format method to
  call ff_get_format
 
 This will allow applications to properly init the decoder in

@@ -1,7 +1,7 @@
 From 6715fc47b1735a3cee06c69f71a468ea0aa1bf15 Mon Sep 17 00:00:00 2001
 From: Jernej Skrabec <jernej.skrabec@siol.net>
 Date: Sat, 15 Dec 2018 22:32:16 +0100
-Subject: [PATCH 21/54] Add V4L2 request API h264 hwaccel
+Subject: [PATCH 21/55] Add V4L2 request API h264 hwaccel
 
 Signed-off-by: Jernej Skrabec <jernej.skrabec@siol.net>
 Signed-off-by: Jonas Karlman <jonas@kwiboo.se>

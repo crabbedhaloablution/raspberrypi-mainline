@@ -1,7 +1,7 @@
 From 3f29ce05d1254bc2b2f14a5e0c85facfe787a348 Mon Sep 17 00:00:00 2001
 From: Lukas Rusak <lorusak@gmail.com>
 Date: Mon, 24 Sep 2018 13:39:56 -0700
-Subject: [PATCH 17/54] libavcodec: v4l2m2m: implement flush
+Subject: [PATCH 17/55] libavcodec: v4l2m2m: implement flush
 
 ---
  libavcodec/v4l2_m2m_dec.c | 36 ++++++++++++++++++++++++++++++++++++

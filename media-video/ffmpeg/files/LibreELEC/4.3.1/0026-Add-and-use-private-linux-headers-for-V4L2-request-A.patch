@@ -1,7 +1,7 @@
 From 2a4b7f95064e23ba671f733e340e80adb62085e7 Mon Sep 17 00:00:00 2001
 From: Jernej Skrabec <jernej.skrabec@siol.net>
 Date: Thu, 14 Feb 2019 23:20:05 +0100
-Subject: [PATCH 26/54] Add and use private linux headers for V4L2 request API
+Subject: [PATCH 26/55] Add and use private linux headers for V4L2 request API
  ctrls
 
 Signed-off-by: Jernej Skrabec <jernej.skrabec@siol.net>

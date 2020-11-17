@@ -1,7 +1,7 @@
 From 54b4f2e72ab3bd84d4a185678e23706aa192122d Mon Sep 17 00:00:00 2001
 From: John Cox <jc@kynesim.co.uk>
 Date: Tue, 7 Jul 2020 15:05:34 +0100
-Subject: [PATCH 51/54] Add unistd.h to define close
+Subject: [PATCH 51/55] Add unistd.h to define close
 
 ---
  libavcodec/rpivid_hevc.c | 1 +

@@ -1,7 +1,7 @@
 From 6cda57afa1699998c2c2da0e377d201040b634e7 Mon Sep 17 00:00:00 2001
 From: Lukas Rusak <lorusak@gmail.com>
 Date: Thu, 16 Aug 2018 21:09:40 -0700
-Subject: [PATCH 10/54] libavcodec: v4l2m2m: depends on libdrm
+Subject: [PATCH 10/55] libavcodec: v4l2m2m: depends on libdrm
 
 ---
  configure                 | 1 +
@@ -29,7 +29,7 @@ index 4bb2bf6f87..c36a73d1fa 100644
   */
  
 -#include <drm/drm_fourcc.h>
-+#include <libdrm/drm_fourcc.h>
++#include <drm_fourcc.h>
  #include <linux/videodev2.h>
  #include <sys/ioctl.h>
  #include <sys/mman.h>

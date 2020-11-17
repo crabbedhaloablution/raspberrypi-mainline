@@ -1,7 +1,7 @@
 From d7e3ab424467777d44a6eb44e12e4b6f5997f4b6 Mon Sep 17 00:00:00 2001
 From: Boris Brezillon <boris.brezillon@collabora.com>
 Date: Wed, 22 May 2019 14:46:58 +0200
-Subject: [PATCH 23/54] Add V4L2 request API vp8 hwaccel
+Subject: [PATCH 23/55] Add V4L2 request API vp8 hwaccel
 
 Need to fix the STREAMOFF/STREAMON issue in a proper way.
 

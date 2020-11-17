@@ -1,7 +1,7 @@
 From c7423ddf04bb3d1e348ad1e725b38e577df21f9b Mon Sep 17 00:00:00 2001
 From: Lukas Rusak <lorusak@gmail.com>
 Date: Thu, 16 Aug 2018 21:11:38 -0700
-Subject: [PATCH 13/54] libavcodec: v4l2m2m: allow using software pixel formats
+Subject: [PATCH 13/55] libavcodec: v4l2m2m: allow using software pixel formats
 
 ---
  libavcodec/v4l2_m2m_dec.c | 11 ++++++++++-

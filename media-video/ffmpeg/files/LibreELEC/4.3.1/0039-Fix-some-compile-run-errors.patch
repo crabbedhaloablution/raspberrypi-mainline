@@ -1,7 +1,7 @@
 From 6df5cb52197a9025ec01273f3cc69fd144d87a4b Mon Sep 17 00:00:00 2001
 From: John Cox <jc@kynesim.co.uk>
 Date: Mon, 22 Jun 2020 12:19:13 +0100
-Subject: [PATCH 39/54] Fix some compile & run errors
+Subject: [PATCH 39/55] Fix some compile & run errors
 
 ---
  libavcodec/avcodec.h     | 27 ---------------------------

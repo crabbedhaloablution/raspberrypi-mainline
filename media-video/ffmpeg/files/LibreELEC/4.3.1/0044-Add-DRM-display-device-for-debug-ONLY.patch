@@ -1,7 +1,7 @@
 From b93258a58ec5ada1ab476a0ea7b86f9caddc5fad Mon Sep 17 00:00:00 2001
 From: John Cox <jc@kynesim.co.uk>
 Date: Fri, 19 Jun 2020 16:47:17 +0100
-Subject: [PATCH 44/54] Add DRM display device for debug ONLY
+Subject: [PATCH 44/55] Add DRM display device for debug ONLY
 
 (cherry picked from commit ad8699ab0105cc279fb40b6a4d94bbca9dc261a4)
 ---

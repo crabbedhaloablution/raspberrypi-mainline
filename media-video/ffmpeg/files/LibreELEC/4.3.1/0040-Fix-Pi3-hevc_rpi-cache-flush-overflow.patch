@@ -1,7 +1,7 @@
 From 46d4b98a723b9ea427c5dc7310489b68199f5f43 Mon Sep 17 00:00:00 2001
 From: John Cox <jc@kynesim.co.uk>
 Date: Tue, 9 Jun 2020 14:52:07 +0100
-Subject: [PATCH 40/54] Fix Pi3 hevc_rpi cache flush overflow
+Subject: [PATCH 40/55] Fix Pi3 hevc_rpi cache flush overflow
 
 Cache flushs rounded height up to CTB size (in this case 64) and
 failed to limit by pic height. The code that actually operated

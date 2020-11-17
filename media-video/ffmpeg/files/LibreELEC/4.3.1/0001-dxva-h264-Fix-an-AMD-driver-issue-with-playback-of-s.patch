@@ -1,7 +1,7 @@
 From 3caa3841ffaedf38b38b7533aa275253212637c5 Mon Sep 17 00:00:00 2001
 From: marc <mhocking@ubuntu-desktop.(none)>
 Date: Mon, 18 Feb 2013 17:18:18 +0000
-Subject: [PATCH 01/54] dxva-h264: Fix an AMD driver issue with playback of
+Subject: [PATCH 01/55] dxva-h264: Fix an AMD driver issue with playback of
  streams that don't start with an I-Frame
 
 ---

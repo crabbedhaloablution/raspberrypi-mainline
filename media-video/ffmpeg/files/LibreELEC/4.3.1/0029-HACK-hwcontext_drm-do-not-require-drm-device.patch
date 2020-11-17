@@ -1,7 +1,7 @@
 From 210f567102d7f1b189a99a49910bc7f18785afe6 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Mon, 29 Apr 2019 22:08:59 +0000
-Subject: [PATCH 29/54] HACK: hwcontext_drm: do not require drm device
+Subject: [PATCH 29/55] HACK: hwcontext_drm: do not require drm device
 
 Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
 ---

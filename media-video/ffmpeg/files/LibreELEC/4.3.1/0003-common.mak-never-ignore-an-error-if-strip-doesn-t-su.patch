@@ -1,7 +1,7 @@
 From e64a6b2c6d4e85e714026a413e3e01b0c6407baa Mon Sep 17 00:00:00 2001
 From: Rechi <Rechi@users.noreply.github.com>
 Date: Tue, 21 Nov 2017 08:16:53 +0100
-Subject: [PATCH 03/54] common.mak: never ignore an error if strip doesn't
+Subject: [PATCH 03/55] common.mak: never ignore an error if strip doesn't
  succeed
 
 ---

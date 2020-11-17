@@ -1,7 +1,7 @@
 From 27dfd5b882c6b219888533a0fb8bb2fce9fb48a3 Mon Sep 17 00:00:00 2001
 From: John Cox <jc@kynesim.co.uk>
 Date: Mon, 6 Jul 2020 16:32:02 +0100
-Subject: [PATCH 49/54] Update ZC comments
+Subject: [PATCH 49/55] Update ZC comments
 
 ---
  libavcodec/rpi_zc.h | 100 ++++++++++++++++++++++++++++++++++----------

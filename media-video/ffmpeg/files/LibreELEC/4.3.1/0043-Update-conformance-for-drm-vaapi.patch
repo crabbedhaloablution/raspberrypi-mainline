@@ -1,7 +1,7 @@
 From 4e83c7801f5409b8f6ce76093f0f2d7059d4d4b9 Mon Sep 17 00:00:00 2001
 From: John Cox <jc@kynesim.co.uk>
 Date: Fri, 19 Jun 2020 16:37:13 +0100
-Subject: [PATCH 43/54] Update conformance for drm & vaapi
+Subject: [PATCH 43/55] Update conformance for drm & vaapi
 
 ---
  pi-util/conf_h265.2016.csv | 390 ++++++++++++++++++-------------------

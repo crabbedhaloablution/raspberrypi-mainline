@@ -1,7 +1,7 @@
 From ce72275b8f62886997e9d330c60eafbb7230d42a Mon Sep 17 00:00:00 2001
 From: Andriy Gelman <andriy.gelman@gmail.com>
 Date: Tue, 5 May 2020 01:54:54 -0400
-Subject: [PATCH 08/54] avcodec/v4l2_m2m_dec: Use av_packet_move_ref()
+Subject: [PATCH 08/55] avcodec/v4l2_m2m_dec: Use av_packet_move_ref()
 
 Signed-off-by: Andriy Gelman <andriy.gelman@gmail.com>
 ---

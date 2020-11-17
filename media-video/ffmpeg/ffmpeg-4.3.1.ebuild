@@ -13,6 +13,23 @@ EAPI=7
 # package is free _not_ to := depend on FFmpeg but I would strongly encourage
 # doing so since such a case is unlikely.
 FFMPEG_SUBSLOT=56.58.58
+#Prerequisites for video-acceleration on Raspberry Pi:
+#	https://www.raspberrypi.org/forums/viewtopic.php?p=1436162#p1436162
+#	gpu_mem= in /boot/config.txt should be set to a reasonable number,
+#	64 works for one task at a time, 128 is better.
+#	Do: "vcgencmd get_mem gpu" to see what it is set to currently.
+#
+#The following use-flags are for Raspberry Pi (1,2,3,4) arm32 only (will not work elsewhere):
+#	raspberry-pi raspberry-pi-2
+#
+#The following use flags flags need to be set for Raspberry Pi 1 arm32:
+#	raspberry-pi mmal -cpu_flags_arm_neon
+#
+#The following use flags flags need to be set for Raspberry Pi 2+ arm32:
+#	raspberry-pi raspberry-pi-2 mmal cpu_flags_arm_neon
+#
+#The following use-flags need to be set for Raspberry Pi 3/4 arm64:
+#	v4l2-request v4l libv4l sand libdrm cpu_flags_arm_neon
 
 SCM="git-r3"
 EGIT_MIN_CLONE_TYPE="single"
@@ -61,8 +78,9 @@ fi
 FFMPEG_FLAG_MAP=(
 		+bzip2:bzlib cpudetection:runtime-cpudetect debug gcrypt +gnutls gmp
 		+gpl hardcoded-tables +iconv libressl:libtls libxml2 lzma +network opencl
-		openssl +postproc samba:libsmbclient sdl:ffplay sdl:sdl2 vaapi vdpau vulkan
-		X:xlib X:libxcb X:libxcb-shm X:libxcb-xfixes +zlib
+		openssl +postproc raspberry-pi:rpi samba:libsmbclient sdl:ffplay sdl:sdl2
+		v4l2-request:libudev v4l2-request vaapi vdpau vulkan X:xlib X:libxcb
+		X:libxcb-shm X:libxcb-xfixes +zlib
 		# libavdevice options
 		cdio:libcdio iec61883:libiec61883 ieee1394:libdc1394 libcaca openal
 		opengl
@@ -94,7 +112,7 @@ FFMPEG_ENCODER_FLAG_MAP=(
 )
 
 IUSE="
-	alsa chromium doc +encode oss pic static-libs test v4l
+	alsa chromium doc +encode oss pic raspberry-pi-2 sand static-libs test v4l
 	${FFMPEG_FLAG_MAP[@]%:*}
 	${FFMPEG_ENCODER_FLAG_MAP[@]%:*}
 "
@@ -163,7 +181,6 @@ FFTOOLS=( aviocat cws2fws ffescape ffeval ffhash fourcc2pixfmt graph2dot isminde
 IUSE="${IUSE} ${FFTOOLS[@]/#/+fftools_}"
 
 RDEPEND="
-	x11-libs/libdrm
 	alsa? ( >=media-libs/alsa-lib-1.0.27.2[${MULTILIB_USEDEP}] )
 	amr? ( >=media-libs/opencore-amr-0.1.3-r1[${MULTILIB_USEDEP}] )
 	bluray? ( >=media-libs/libbluray-0.3.0-r1:=[${MULTILIB_USEDEP}] )
@@ -232,6 +249,7 @@ RDEPEND="
 	opengl? ( >=virtual/opengl-7.0-r1[${MULTILIB_USEDEP}] )
 	opus? ( >=media-libs/opus-1.0.2-r2[${MULTILIB_USEDEP}] )
 	pulseaudio? ( >=media-sound/pulseaudio-2.1-r1[${MULTILIB_USEDEP}] )
+	raspberry-pi? ( >=media-libs/raspberrypi-userland-0_pre20201022 )
 	rubberband? ( >=media-libs/rubberband-1.8.1-r1[${MULTILIB_USEDEP}] )
 	samba? ( >=net-fs/samba-3.6.23-r1[client,${MULTILIB_USEDEP}] )
 	sdl? ( media-libs/libsdl2[sound,video,${MULTILIB_USEDEP}] )
@@ -240,6 +258,7 @@ RDEPEND="
 	ssh? ( >=net-libs/libssh-0.5.5[${MULTILIB_USEDEP}] )
 	svg? ( gnome-base/librsvg:2=[${MULTILIB_USEDEP}] )
 	truetype? ( >=media-libs/freetype-2.5.0.1:2[${MULTILIB_USEDEP}] )
+	v4l2-request? ( virtual/libudev )
 	vaapi? ( >=x11-libs/libva-1.2.1-r1:0=[${MULTILIB_USEDEP}] )
 	video_cards_nvidia? ( >=media-libs/nv-codec-headers-9.1.23.1[${MULTILIB_USEDEP}] )
 	vdpau? ( >=x11-libs/libvdpau-0.7[${MULTILIB_USEDEP}] )
@@ -308,6 +327,11 @@ REQUIRED_USE="
 	libv4l? ( v4l )
 	fftools_cws2fws? ( zlib )
 	test? ( encode )
+	v4l? ( libdrm )
+	v4l2-request? ( libdrm libv4l )
+	raspberry-pi? ( mmal v4l2-request )
+	raspberry-pi-2? ( raspberry-pi )
+	sand? ( v4l2-request )
 	${GPL_REQUIRED_USE}
 	${CPU_REQUIRED_USE}"
 RESTRICT="
@@ -322,8 +346,6 @@ PATCHES=(
 	"${FILESDIR}"/${PN}-4.3-fix-build-without-SSSE3.patch
 	"${FILESDIR}"/${PN}-4.3-altivec-novsx-yuv2rgb.patch
 )
-
-
 
 MULTILIB_WRAPPED_HEADERS=(
 	/usr/include/libavutil/avconfig.h
@@ -348,6 +370,7 @@ multilib_src_configure() {
 	local ffuse=( "${FFMPEG_FLAG_MAP[@]}" )
 	use openssl || use libressl && use gpl && myconf+=( --enable-nonfree )
 	use samba && myconf+=( --enable-version3 )
+	use raspberry-pi-2 && append-flags -D__VCCOREVER__=0x4000000
 
 	# Encoders
 	if use encode ; then

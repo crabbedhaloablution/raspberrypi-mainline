@@ -1,7 +1,7 @@
 From 19cbdfdc71302a6f2e0756a25ef00d4da3f69b79 Mon Sep 17 00:00:00 2001
 From: Jonas Karlman <jonas@kwiboo.se>
 Date: Sat, 15 Dec 2018 22:32:16 +0100
-Subject: [PATCH 20/54] Add V4L2 request API mpeg2 hwaccel
+Subject: [PATCH 20/55] Add V4L2 request API mpeg2 hwaccel
 
 Signed-off-by: Jonas Karlman <jonas@kwiboo.se>
 ---

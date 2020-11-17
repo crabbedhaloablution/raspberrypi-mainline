@@ -1,7 +1,7 @@
 From ae20c316d1712c26e137a4809e91733009dfe603 Mon Sep 17 00:00:00 2001
 From: Anton Fedchin <afedchin at ruswizards.com>
 Date: Fri, 11 Jan 2019 10:47:43 +0100
-Subject: [PATCH 05/54] after 153b36f there is a possibility to crash when
+Subject: [PATCH 05/55] after 153b36f there is a possibility to crash when
  trying to get index of a surface which points to nirvana.
 
 it may occurs when a stream starts with non i-frame.

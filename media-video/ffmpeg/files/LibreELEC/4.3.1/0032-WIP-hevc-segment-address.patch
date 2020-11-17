@@ -1,7 +1,7 @@
 From 752fe8806bdc279790707c84043a398479bf954f Mon Sep 17 00:00:00 2001
 From: Jernej Skrabec <jernej.skrabec@siol.net>
 Date: Sat, 15 Dec 2018 22:32:16 +0100
-Subject: [PATCH 32/54] WIP: hevc segment address
+Subject: [PATCH 32/55] WIP: hevc segment address
 
 Signed-off-by: Jernej Skrabec <jernej.skrabec@siol.net>
 ---

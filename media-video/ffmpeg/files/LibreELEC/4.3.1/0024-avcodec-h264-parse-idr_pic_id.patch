@@ -1,7 +1,7 @@
 From 6edd33208e820a00cfe0d44a0b44418c6e83c918 Mon Sep 17 00:00:00 2001
 From: Ezequiel Garcia <ezequiel@collabora.com>
 Date: Wed, 20 Feb 2019 11:18:00 -0300
-Subject: [PATCH 24/54] avcodec/h264: parse idr_pic_id
+Subject: [PATCH 24/55] avcodec/h264: parse idr_pic_id
 
 Signed-off-by: Ezequiel Garcia <ezequiel@collabora.com>
 ---

@@ -1,7 +1,7 @@
 From 52c6fafbaa37966f64fe90b76ac2887d30a0c9b7 Mon Sep 17 00:00:00 2001
 From: Lukas Rusak <lorusak@gmail.com>
 Date: Thu, 16 Aug 2018 21:10:53 -0700
-Subject: [PATCH 12/54] libavcodec: v4l2m2m: only mmap the buffer when it is
+Subject: [PATCH 12/55] libavcodec: v4l2m2m: only mmap the buffer when it is
  output type and drm prime is used
 
 ---

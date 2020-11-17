@@ -1,7 +1,7 @@
 From 0f42a84ad50e101b1057f998c84b1b148122c79a Mon Sep 17 00:00:00 2001
 From: John Cox <jc@kynesim.co.uk>
 Date: Mon, 22 Jun 2020 15:28:06 +0100
-Subject: [PATCH 45/54] Add a native build conf (enables vaapi)
+Subject: [PATCH 45/55] Add a native build conf (enables vaapi)
 
 ---
  pi-util/conf_native.sh | 39 +++++++++++++++++++++++++++++++++++++++
