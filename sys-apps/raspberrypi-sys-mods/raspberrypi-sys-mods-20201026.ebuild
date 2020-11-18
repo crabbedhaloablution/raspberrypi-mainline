@@ -17,7 +17,7 @@ SLOT="0"
 
 KEYWORDS="~arm ~arm64"
 
-IUSE="+ssh"
+IUSE=""
 
 RDEPEND="
 	acct-group/input
@@ -25,7 +25,6 @@ RDEPEND="
 	acct-group/spi
 	acct-group/gpio
 	acct-group/video
-	ssh? ( net-misc/openssh )
 	"
 
 DEPEND="${RDEPEND}"
@@ -62,12 +61,5 @@ src_install() {
 	for target in reboot.target halt.target poweroff.target; do
 		systemd_enable_service "${target}" rpi-display-backlight.service
 	done
-	if use ssh; then
-		systemd_newunit	debian/raspberrypi-sys-mods.sshswitch.service sshswitch.service
-		systemd_enable_service multi-user.target sshswitch.service
-
-		systemd_newunit	debian/raspberrypi-sys-mods.regenerate_ssh_host_keys.service regenerate_ssh_host_keys.service
-		systemd_enable_service multi-user.target regenerate_ssh_host_keys.service
-	fi
 }
 

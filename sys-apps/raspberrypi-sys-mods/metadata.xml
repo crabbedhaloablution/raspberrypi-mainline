@@ -5,9 +5,4 @@
 	<upstream>
 		<remote-id type="github">RPi-Distro/raspberrypi-sys-mods</remote-id>
 	</upstream>
-	<use>
-		<flag name="ssh">
-		Enable <pkg>net-misc/openssh</pkg> services if /boot/ssh is present
-		</flag>
-	</use>
 </pkgmetadata>
