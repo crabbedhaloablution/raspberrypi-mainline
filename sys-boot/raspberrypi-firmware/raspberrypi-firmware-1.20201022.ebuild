@@ -49,8 +49,8 @@ pkg_preinst() {
 
 src_prepare() {
 	default
+	cp "${FILESDIR}"/${PN}-1.20201022-config.txt "${WORKDIR}" || die
 	if use arm64; then
-		cp "${FILESDIR}"/${PN}-1.20201022-config.txt "${WORKDIR}" || die
 		# Force selection of the 64-bit kernel8.img to match our userland
 		echo "arm_64bit=1" >> "${WORKDIR}"/${PN}-1.20201022-config.txt || die
 	fi
