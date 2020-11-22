@@ -22,7 +22,7 @@ DEPEND="sys-apps/help2man
 	${PYTHON_DEPS}"
 RDEPEND="sys-apps/flashrom
 	${PYTHON_DEPS}
-	>=media-libs/raspberrypi-userland-0_pre20201022"
+	|| ( >=media-libs/raspberrypi-userland-0_pre20201022 >=media-libs/raspberrypi-userland-bin-1.20201022 )"
 
 S="${WORKDIR}"
 
@@ -37,7 +37,7 @@ src_prepare() {
 }
 
 src_install() {
-	pushd "${MY_P}" 1>/dev/null || die "Cannot change into directory ${P}"
+	pushd "${MY_P}" 1>/dev/null || die "Cannot change into directory ${MY_P}"
 
 	python_scriptinto /usr/sbin
 	python_foreach_impl python_newscript rpi-eeprom-config rpi-eeprom-config
@@ -80,7 +80,7 @@ src_install() {
 }
 
 pkg_postinst() {
-	elog 'To have rpi-eeprom-update be run at each startup, enable either of'
+	elog 'To have rpi-eeprom-update run at each startup, enable either'
 	elog '/etc/init.d/rpi-eeprom-update (for openrc users)'
 	elog 'or'
 	elog 'rpi-eeprom-update.service (for systemd users)'
