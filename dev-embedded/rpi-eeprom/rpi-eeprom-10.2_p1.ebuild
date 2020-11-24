@@ -22,7 +22,10 @@ DEPEND="sys-apps/help2man
 	${PYTHON_DEPS}"
 RDEPEND="sys-apps/flashrom
 	${PYTHON_DEPS}
-	|| ( >=media-libs/raspberrypi-userland-0_pre20201022 >=media-libs/raspberrypi-userland-bin-1.20201022 )"
+	|| (
+		>=media-libs/raspberrypi-userland-0_pre20201022
+		>=media-libs/raspberrypi-userland-bin-1.20201022
+	)"
 
 S="${WORKDIR}"
 
