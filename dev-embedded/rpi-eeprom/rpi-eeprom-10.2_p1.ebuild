@@ -83,7 +83,7 @@ src_install() {
 }
 
 pkg_postinst() {
-	elog 'To have rpi-eeprom-update run at each startup, enable either'
+	elog 'To have rpi-eeprom-update run at each startup, enable and start either'
 	elog '/etc/init.d/rpi-eeprom-update (for openrc users)'
 	elog 'or'
 	elog 'rpi-eeprom-update.service (for systemd users)'
