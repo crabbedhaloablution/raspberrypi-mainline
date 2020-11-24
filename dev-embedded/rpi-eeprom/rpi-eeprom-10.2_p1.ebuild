@@ -7,7 +7,7 @@ PYTHON_COMPAT=( python3_{6,7,8,9} )
 
 inherit python-r1 systemd
 
-DESCRIPTION="Raspberry Pi 4 bootloader and the VL805 USB controller updater"
+DESCRIPTION="Updater for Raspberry Pi 4 bootloader and the VL805 USB controller"
 HOMEPAGE="https://github.com/raspberrypi/rpi-eeprom/"
 MY_P="${PN}-$(ver_cut 1-2)"
 MY_BASE_URL="https://archive.raspberrypi.org/debian/pool/main/r/${PN}/${PN}_$(ver_cut 1-2)"
