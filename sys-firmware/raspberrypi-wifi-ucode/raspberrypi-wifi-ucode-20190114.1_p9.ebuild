@@ -3,11 +3,11 @@
 
 EAPI=7
 
-DESCRIPTION="Most up-to-date uCode for the Broadcom wifi chips on Raspberry Pi"
+DESCRIPTION="Most up-to-date uCode for the Broadcom wifi chips on Raspberry Pi SBCs"
 HOMEPAGE="https://github.com/RPi-Distro/firmware-nonfree
 	https://archive.raspberrypi.org/debian/pool/main/f/firmware-nonfree"
 MY_PN=firmware-nonfree
-SRC_URI="https://archive.raspberrypi.org/debian/pool/main/f/${MY_PN}/${MY_PN}_$(ver_cut 1)-$(ver_cut 3)+rpt$(ver_cut 5).debian.tar.xz"
+SRC_URI="https://archive.raspberrypi.org/debian/pool/main/f/${MY_PN}/${MY_PN}_$(ver_cut 1)-$(ver_cut 2)+rpt$(ver_cut 4).debian.tar.xz"
 
 LICENSE="Broadcom"
 SLOT="0"
