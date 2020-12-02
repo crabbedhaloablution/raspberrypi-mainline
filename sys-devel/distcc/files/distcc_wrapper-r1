@@ -36,7 +36,7 @@ args_not_target() {
 
 progname="${0##*/}"
 case "${progname}" in
-	distcc-wrapper)
+	distcc_wrapper)
 	echo "This script should only be called through symlinks in /usr/lib/distcc/bin" 1>&2
 	exit 1
 	;;

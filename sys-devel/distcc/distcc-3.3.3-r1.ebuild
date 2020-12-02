@@ -144,10 +144,10 @@ src_install() {
 		newins "doc/example/xinetd" distcc
 	fi
 
-	newbin "${FILESDIR}/distcc-wrapper-r1" distcc-wrapper
+	newbin "${FILESDIR}/distcc_wrapper-r1" distcc_wrapper
 
 	insinto /usr/share/shadowman/tools
-	newins - distcc-wrapper <<<"${EPREFIX}/usr/lib/distcc/bin"
+	newins - distcc_wrapper <<<"${EPREFIX}/usr/lib/distcc/bin"
 	newins - distccd <<<"${EPREFIX}/usr/lib/distcc"
 
 	insinto /etc/distcc
@@ -166,7 +166,7 @@ pkg_postinst() {
 	fi
 
 	if [[ ${ROOT} == / ]]; then
-		eselect compiler-shadow update distcc-wrapper
+		eselect compiler-shadow update distcc_wrapper
 		eselect compiler-shadow update distccd
 	fi
 
