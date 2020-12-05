@@ -34,18 +34,8 @@ S="${WORKDIR}/${PN}"
 
 DOCS=( debian/changelog )
 
-src_prepare() {
-	default
-	sed -i \
-		-e 's:usr/lib/raspberrypi-sys-mods:usr/libexec/raspberrypi-sys-mods:' \
-		lib/udev/rules.d/15-i2c-modprobe.rules || die "Failed sedding 15-i2c-modprobe.rules"
-}
-
 src_install() {
 	default
-	insinto /etc/sysctl.d/
-	doins etc.armhf/sysctl.d/98-rpi.conf
-
 	insinto /etc/modprobe.d/
 	#See https://github.com/RPi-Distro/raspberrypi-sys-mods/issues/37
 	doins etc.armhf/modprobe.d/blacklist-8192cu.conf
@@ -54,7 +44,7 @@ src_install() {
 
 	udev_dorules etc.armhf/udev/rules.d/99-com.rules
 	udev_dorules lib/udev/rules.d/{15-i2c-modprobe.rules,70-microbit.rules}
-	exeinto /usr/libexec/raspberrypi-sys-mods
+	exeinto /usr/lib/raspberrypi-sys-mods
 	doexe usr/lib/raspberrypi-sys-mods/i2cprobe
 
 	systemd_newunit debian/raspberrypi-sys-mods.rpi-display-backlight.service rpi-display-backlight.service
@@ -62,4 +52,3 @@ src_install() {
 		systemd_enable_service "${target}" rpi-display-backlight.service
 	done
 }
-
