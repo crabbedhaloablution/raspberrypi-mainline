@@ -5,7 +5,7 @@ EAPI=7
 
 inherit udev systemd
 
-DESCRIPTION="System tweaks for the Raspberry Pi from Raspbian (RPi-Distro)"
+DESCRIPTION="System tweaks for the Raspberry Pi from Raspberry Pi OS"
 
 HOMEPAGE="https://github.com/RPi-Distro/raspberrypi-sys-mods"
 
