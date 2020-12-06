@@ -2,7 +2,7 @@
 # Copyright 1999-2020 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-description="Raspberry Pi 3+4 hciuart activation service"
+description="Raspberry Pi hciuart activation service"
 command="/usr/bin/btuart"
 
 depend() {
