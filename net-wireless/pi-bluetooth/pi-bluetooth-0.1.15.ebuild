@@ -76,6 +76,7 @@ src_configure() {
 	cd "${BLUEZ_S}"
 	econf	--enable-sixaxis \
 		--enable-hid2hci \
+		--disable-systemd \
 		--enable-experimental \
 		--enable-library \
 		--enable-deprecated
@@ -100,5 +101,18 @@ src_install() {
 	else
 		newinitd "${FILESDIR}"/init.d_rpi-hciuart-1 hciuart
 		udev_dorules "${FILESDIR}"/95-pi-bthelper.rules
+	fi
+}
+
+pkg_postinst() {
+	if use systemd; then
+		elog "To enable the Bluetooth module of your Raspberry Pi, do:"
+		elog "systemctl enable hciuart"
+		elog "and reboot"
+	else
+		elog "To enable the Bluetooth module of your Raspberry Pi, do:"
+		elog "rc-update add bluetooth default"
+		elog "rc-update add hciuart default"
+		elog "and reboot"
 	fi
 }
