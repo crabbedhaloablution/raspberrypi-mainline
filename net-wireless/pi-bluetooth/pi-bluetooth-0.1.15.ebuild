@@ -17,9 +17,9 @@ LICENSE="BSD GPL-2+ LGPL-2.1+"
 SLOT="0"
 KEYWORDS="~arm ~arm64"
 IUSE="systemd"
-RDEPEND="sys-firmware/raspberrypi-bluetooth-ucode
-	net-wireless/bluez[deprecated,udev]
-	"
+RDEPEND="sys-apps/raspberrypi-sys-mods
+	sys-firmware/raspberrypi-bluetooth-ucode
+	net-wireless/bluez[deprecated,udev]"
 DEPEND=""
 BDEPEND=""
 DOCS="debian/changelog"
