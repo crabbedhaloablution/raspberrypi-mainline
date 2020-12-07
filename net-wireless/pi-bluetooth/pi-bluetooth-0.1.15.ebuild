@@ -5,7 +5,7 @@ EAPI=7
 
 inherit udev systemd
 
-DESCRIPTION="This is a sample skeleton ebuild file"
+DESCRIPTION="Init scripts for bluetooth on Raspberry Pi Zero W, 3 and 4"
 HOMEPAGE="https://github.com/RPi-Distro/pi-bluetooth
 	https://archive.raspberrypi.org/debian/pool/main/p/pi-bluetooth/"
 BLUEZ_P=bluez-5.55
@@ -30,6 +30,7 @@ PATCHES=(
 
 src_prepare() {
 	default
+
 	ebegin "Sed'ing path for hciconfig in bthelper"
 	if grep -q -E "(^| )/bin/hciconfig" usr/bin/bthelper; then
 		sed -i -E \
@@ -41,6 +42,7 @@ src_prepare() {
 		eerror "usr/bin/bthelper no longer needs its path for /bin/hciconfig corrected"
 		die "Please remove workaround sed from ${PF} ebuild"
 	fi
+
 	ebegin "Sed'ing /usr/bin/hciattach -> /usr/lib/pi-bluetooth/rpi-hciattach"
 	if grep -q -E "^HCIATTACH=/usr/bin/hciattach$" usr/bin/btuart; then
 		sed -i -E \
@@ -49,9 +51,10 @@ src_prepare() {
 		eend
 	else
 		eend 1
-		eerror "usr/bin/btuart has changed, ^HCIATTACH=/usr/bin/hciattach$ no longer matches"
+		eerror 'usr/bin/btuart has changed, ^HCIATTACH=/usr/bin/hciattach$ no longer matches'
 		die "Check what's changed and why"
 	fi
+
 	if ! use systemd; then
 		# bluetoothctl needs the bluez daemon running to work.
 		# udev may run before the bluez daemon, so we remove the bluetoothctl power-cycle
@@ -68,18 +71,39 @@ src_prepare() {
 			die "Check what's wrong in ${PF} ebuild"
 		fi
 	fi
+
 	cd "${BLUEZ_S}"
 	eapply -p1 "${FILESDIR}"/${PN}-0.1.15-003-hciattach-raspberrypi-mods.patch
 }
 
 src_configure() {
 	cd "${BLUEZ_S}"
-	econf	--enable-sixaxis \
-		--enable-hid2hci \
-		--disable-systemd \
-		--enable-experimental \
+	econf	--localstatedir=/var \
+		--disable-android \
+		--enable-datafiles \
+		--enable-optimization \
+		--disable-debug \
+		--enable-pie \
+		--enable-threads \
 		--enable-library \
-		--enable-deprecated
+		--enable-tools \
+		--enable-manpages \
+		--enable-monitor \
+		--disable-btpclient \
+		--disable-external-ell \
+		--disable-cups \
+		--enable-deprecated \
+		--enable-experimental \
+		--disable-mesh \
+		--disable-external-ell \
+		--disable-midi \
+		--disable-obex \
+		--enable-client \
+		--disable-systemd \
+		--disable-test \
+		--enable-udev \
+		--enable-hid2hci \
+		--enable-sixaxis
 }
 
 src_compile() {
@@ -105,14 +129,12 @@ src_install() {
 }
 
 pkg_postinst() {
+	elog "To enable the Bluetooth module of your Raspberry Pi, do:"
 	if use systemd; then
-		elog "To enable the Bluetooth module of your Raspberry Pi, do:"
 		elog "systemctl enable hciuart"
-		elog "and reboot"
 	else
-		elog "To enable the Bluetooth module of your Raspberry Pi, do:"
 		elog "rc-update add bluetooth default"
 		elog "rc-update add hciuart default"
-		elog "and reboot"
 	fi
+	elog "and reboot"
 }
