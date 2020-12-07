@@ -13,7 +13,7 @@ BLUEZ_S=${WORKDIR}/${BLUEZ_P}
 SRC_URI="https://archive.raspberrypi.org/debian/pool/main/p/${PN}/${PN}_${PV}.tar.xz
 	https://www.kernel.org/pub/linux/bluetooth/${BLUEZ_P}.tar.xz"
 S="${WORKDIR}/${PN}"
-LICENSE="BSD"
+LICENSE="BSD GPL-2+ LGPL-2.1+"
 SLOT="0"
 KEYWORDS="~arm ~arm64"
 IUSE="systemd"
