@@ -72,6 +72,12 @@ src_prepare() {
 		fi
 	fi
 
+	# We have to build our own hciattach since some changes that aren't
+	# generalizable have been applied to upstream to make it work better
+	# with the Raspberry Pi.
+	# Changing the firmware dir, we should be able to get into Gentoo,
+	# but the rest of it is just due to quirky behaviour of the various
+	# Raspberry Pi boards.
 	cd "${BLUEZ_S}"
 	eapply -p1 "${FILESDIR}"/${PN}-0.1.15-003-hciattach-raspberrypi-mods.patch
 }
