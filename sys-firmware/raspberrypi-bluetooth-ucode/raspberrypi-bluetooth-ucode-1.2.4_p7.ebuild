@@ -3,7 +3,7 @@
 
 EAPI=7
 
-DESCRIPTION="Firmware for Bluetooth on Raspberry 3 and 4"
+DESCRIPTION="Firmware for Bluetooth on Raspberry Pi Zero W, 3 and 4"
 HOMEPAGE="https://github.com/RPi-Distro/bluez-firmware
 	https://archive.raspberrypi.org/debian/pool/main/b/bluez-firmware/"
 SRC_URI="https://archive.raspberrypi.org/debian/pool/main/b/bluez-firmware/bluez-firmware_$(ver_cut 1-2)-$(ver_cut 3)+rpt$(ver_cut 5).debian.tar.xz"
