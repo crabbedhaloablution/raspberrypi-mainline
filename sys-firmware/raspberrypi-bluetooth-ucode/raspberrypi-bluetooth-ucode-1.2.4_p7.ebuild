@@ -17,6 +17,10 @@ DEPEND="${RDEPEND}"
 BDEPEND=""
 DOCS="debian/changelog"
 
+# NOTE:	We only install the debian.tar.xz. The package sys-firmware/bluez-firmware
+#	contains the other bits. Seems Raspbian just decided to hijack an innocent
+#	package when looking for where to put their blue bits.
+
 src_install() {
 	default
 	insinto /lib/firmware/brcm
