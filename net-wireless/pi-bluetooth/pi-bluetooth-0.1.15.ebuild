@@ -73,8 +73,15 @@ src_prepare() {
 	fi
 
 	# We have to build our own hciattach since some changes that aren't
-	# generalizable have been applied to upstream to make it work better
+	# generalizable have been applied to upstream bluez to make it work better
 	# with the Raspberry Pi.
+	# Specifically:
+	# * hciattach will by default load firmware from /etc/firmware, not
+	#   /lib/firmware. /etc/firmware is a... bad choice... for a firmware
+	#   dir
+	# * The UART speed must be reset *after* the firmware download, or risk
+	#   firmware not being loaded
+	# * sleep(1) to avoid race condition
 	# Changing the firmware dir, we should be able to get into Gentoo,
 	# but the rest of it is just due to quirky behaviour of the various
 	# Raspberry Pi boards.
