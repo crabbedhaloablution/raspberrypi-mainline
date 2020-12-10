@@ -11,6 +11,7 @@ for dir in "${old_path[@]}"; do
 done
 export PATH
 read -r TUPLE < /etc/distcc/tuple
+TUPLE=${CHOST:-${TUPLE}}
 DISTCC=$(type -p distcc)
 
 args_not_target() {
