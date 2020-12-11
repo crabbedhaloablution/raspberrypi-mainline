@@ -1,12 +1,12 @@
 diff --git a/sbc/sbc_primitives.c b/sbc/sbc_primitives.c
-index 97a75be..58e6d78 100644
+index 97a75be..ac79ca5 100644
 --- a/sbc/sbc_primitives.c
 +++ b/sbc/sbc_primitives.c
 @@ -591,6 +591,7 @@ static int sbc_calc_scalefactors_j(
  	return joint;
  }
  
-+#ifdef __i386__ || __x86_64__
++#if defined(__i386__) || defined(__x86_64__)
  static void sbc_init_primitives_x86(struct sbc_encoder_state *state)
  {
  	__builtin_cpu_init();
@@ -22,7 +22,7 @@ index 97a75be..58e6d78 100644
  	state->implementation_info = "Generic C";
  
  	/* X86/AMD64 optimizations */
-+#ifdef __i386__ || __x86_64__
++#if defined(__i386__) || defined(__x86_64__)
  	sbc_init_primitives_x86(state);
 +#endif
  
