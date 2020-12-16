@@ -38,47 +38,34 @@ args_not_target() {
 progname="${0##*/}"
 case "${progname}" in
 	distcc_wrapper)
-	echo "This script should only be called through symlinks in /usr/lib/distcc/bin" 1>&2
-	exit 1
+		echo "This script should only be called through symlinks in /usr/lib/distcc/bin" 1>&2
+		exit 1
 	;;
 	c99)
-	if type -p "${TUPLE}-gcc" &>/dev/null; then
 		# Cribbed from /usr/bin/c99
 		exec "${DISTCC}" "${TUPLE}-gcc" -std=c99 -pedantic -U_FORTIFY_SOURCE "$@"
-	else
-		exec "${DISTCC}" "${progname}" "$@"
-	fi
 	;;
 	cc|gcc|c++|g++)
-	if type -p "${TUPLE}-g${progname:(-2)}" &>/dev/null; then
 		exec "${DISTCC}" "${TUPLE}-g${progname:(-2)}" "$@"
-	else
-		exec "${DISTCC}" "${progname}" "$@"
-	fi
 	;;
 	gcc-*|g++-*)
-	if type -p "${TUPLE}-${progname}" &>/dev/null; then
 		exec "${DISTCC}" "${TUPLE}-${progname}" "$@"
-	else
-		exec "${DISTCC}" "${progname}" "$@"
-	fi
 	;;
 	clang*)
-	if args_not_target "$@"; then
-		exec  "${DISTCC}" "${progname}" -target "${TUPLE}" "$@"
-	else
-		exec  "${DISTCC}" "${progname}" "$@"
-	fi
+		if args_not_target "$@"; then
+			exec  "${DISTCC}" "${progname}" -target "${TUPLE}" "$@"
+		else
+			exec  "${DISTCC}" "${progname}" "$@"
+		fi
 	;;
 	*-*-*-*-clang*)
-	if type -p "clang${progname##*-clang}" &>/dev/null && \
-	   args_not_target "$@"; then
-		TUPLE=${progname%%-clang*}
-		progname=clang${progname##*-clang}
-		exec  "${DISTCC}" "${progname}" -target "${TUPLE}" "$@"
-	else
-		exec  "${DISTCC}" "${progname}" "$@"
-	fi
+		if args_not_target "$@"; then
+			TUPLE=${progname%%-clang*}
+			progname=clang${progname##*-clang}
+			exec  "${DISTCC}" "${progname}" -target "${TUPLE}" "$@"
+		else
+			exec  "${DISTCC}" "${progname}" "$@"
+		fi
 	;;
 	*)
 	exec "${DISTCC}" "${progname}" "$@"
