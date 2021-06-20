@@ -1,4 +1,4 @@
-# Copyright 1999-2020 Gentoo Authors
+# Copyright 1999-2021 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=7
@@ -38,11 +38,11 @@ src_install() {
 	default
 	insinto /etc/modprobe.d/
 	#See https://github.com/RPi-Distro/raspberrypi-sys-mods/issues/37
-	doins etc.armhf/modprobe.d/blacklist-8192cu.conf
+	doins etc.arm/modprobe.d/blacklist-8192cu.conf
 	#See https://github.com/raspberrypi/linux/issues/2164#issuecomment-322152871
-	doins etc.armhf/modprobe.d/blacklist-rtl8xxxu.conf
+	doins etc.arm/modprobe.d/blacklist-rtl8xxxu.conf
 
-	udev_dorules etc.armhf/udev/rules.d/99-com.rules
+	udev_dorules etc.arm/udev/rules.d/99-com.rules
 	udev_dorules lib/udev/rules.d/{15-i2c-modprobe.rules,70-microbit.rules}
 	exeinto /usr/lib/raspberrypi-sys-mods
 	doexe usr/lib/raspberrypi-sys-mods/i2cprobe
